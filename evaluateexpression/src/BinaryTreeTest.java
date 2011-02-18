@@ -35,6 +35,7 @@ public class BinaryTreeTest {
 
 	@Test
 	public void testToString() {
+		// print out the tree structure
 		System.out.println(root);
 		
 	}
