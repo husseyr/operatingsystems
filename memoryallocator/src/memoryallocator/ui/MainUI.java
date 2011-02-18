@@ -48,6 +48,7 @@ public class MainUI extends JFrame {
 	private CurrentMemoryPanel cMemoryPanel = null;
 	private JMenuItem configurePartitionsMenuItem = null;
 	private JCheckBoxMenuItem dynamicCheckBoxMenuItem = null;
+	private JMenuItem configureJobsMenuItem = null;
 	/**
 	 * This is the default constructor
 	 */
@@ -108,6 +109,7 @@ public class MainUI extends JFrame {
 			configureMenu.add(getDynamicCheckBoxMenuItem());
 			configureMenu.add(getMemoryMenuItem());
 			configureMenu.add(getConfigurePartitionsMenuItem());
+			configureMenu.add(getConfigureJobsMenuItem());
 		}
 		return configureMenu;
 	}
@@ -278,13 +280,36 @@ public class MainUI extends JFrame {
 			dynamicCheckBoxMenuItem.setText("Dynamic partitions");
 			dynamicCheckBoxMenuItem.addItemListener(new java.awt.event.ItemListener() {
 				public void itemStateChanged(java.awt.event.ItemEvent e) {
-					if (e.getStateChange() == ItemEvent.SELECTED)
+					if (e.getStateChange() == ItemEvent.SELECTED) {
+						fields.setDynamic(true);
 						getConfigurePartitionsMenuItem().setVisible(false);
-					else
+					}
+					else {
+						fields.setDynamic(false);
 						getConfigurePartitionsMenuItem().setVisible(true);
+					}
 				}
 			});
 		}
 		return dynamicCheckBoxMenuItem;
+	}
+
+	/**
+	 * This method initializes configureJobsMenuItem	
+	 * 	
+	 * @return javax.swing.JMenuItem	
+	 */
+	private JMenuItem getConfigureJobsMenuItem() {
+		if (configureJobsMenuItem == null) {
+			configureJobsMenuItem = new JMenuItem();
+			configureJobsMenuItem.setText("Configure jobs");
+			configureJobsMenuItem.addActionListener(new java.awt.event.ActionListener() {
+				public void actionPerformed(java.awt.event.ActionEvent e) {
+					JMenuItem source = (JMenuItem)e.getSource();
+					new ConfigureJobsDialog((JFrame)source.getTopLevelAncestor(), fields).setVisible(true);
+				}
+			});
+		}
+		return configureJobsMenuItem;
 	}
 }

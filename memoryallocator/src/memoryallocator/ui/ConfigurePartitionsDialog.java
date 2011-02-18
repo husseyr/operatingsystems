@@ -4,6 +4,8 @@
 package memoryallocator.ui;
 
 import javax.swing.JPanel;
+
+import java.awt.Color;
 import java.awt.Frame;
 import java.awt.BorderLayout;
 import javax.swing.JDialog;
@@ -16,6 +18,8 @@ import java.awt.GridBagLayout;
 import javax.swing.JLabel;
 import java.awt.GridBagConstraints;
 import java.awt.FlowLayout;
+
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JTextArea;
 import javax.swing.JButton;
@@ -24,6 +28,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import java.awt.GridLayout;
 import java.util.List;
+import javax.swing.WindowConstants;
 
 /**
  * @author rob
@@ -64,6 +69,7 @@ public class ConfigurePartitionsDialog extends JDialog {
 	 */
 	private void initialize() {
 		this.setSize(475, 475);
+		this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		this.setTitle("Configure partitions");
 		this.setModal(true);
 		this.setContentPane(getJContentPane());
@@ -111,7 +117,7 @@ public class ConfigurePartitionsDialog extends JDialog {
 			addPartitionPanel.add(getAddPartitionsPanel(), null);
 			addPartitionPanel.add(getPartitionListPanel(), null);
 
-			// show any partitions currents in the list
+			// show any partitions currently in the list
 			updatePartitions();
 		}
 		return addPartitionPanel;
@@ -223,6 +229,7 @@ public class ConfigurePartitionsDialog extends JDialog {
 		JPanel partItemPanel = new JPanel();
 		partItemPanel.setSize(400, 200);
 		partItemPanel.setLayout(new FlowLayout());
+		partItemPanel.setBorder(BorderFactory.createLineBorder(Color.gray, 1));
 		
 		JLabel partLabel = new JLabel(partLabelString);
 		partItemPanel.add(partLabel);

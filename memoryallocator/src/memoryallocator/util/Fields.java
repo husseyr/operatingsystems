@@ -15,14 +15,18 @@ import java.util.Queue;
 public class Fields {
 	private int memSize;
 	private List<Partition> partList;
-	private Queue<Job> jobQueue;
+	private List<Job> jobQueue;
 	private static int totalPartSize;
+	private boolean dynamic;
+	private static int lastJobID;
 	
-	public Fields(int memSize, List<Partition> partList, Queue<Job> jobQueue) {
+	public Fields(int memSize, List<Partition> partList, List<Job> jobQueue) {
 		this.memSize = memSize;
 		this.partList = partList;
 		this.jobQueue = jobQueue;
+		dynamic = false;
 		totalPartSize = 0;
+		lastJobID = -1; // -1 since there is no last job at this point
 	}
 	
 	public int getMemSize() {
@@ -41,8 +45,18 @@ public class Fields {
 	public List<Partition> getPartList() {
 		return partList;
 	}
-	public Queue<Job> getJobQueue() {
+	public List<Job> getJobQueue() {
 		return jobQueue;
+	}
+	public void setDynamic(boolean dynamic) {
+		this.dynamic = dynamic;
+		totalPartSize = 0;
+		partList = new LinkedList<Partition>();
+		lastJobID = 0;
+		jobQueue = new LinkedList<Job>();
+	}
+	public boolean isDynamic() {
+		return dynamic;
 	}
 	
 	/**
@@ -72,5 +86,29 @@ public class Fields {
 		}
 		totalPartSize -= partList.remove(id).size;
 	}
+	
+	public int getLargestPartition() {
+		int largestSize = 0;
+		for (Partition p : partList) {
+			if (p.size > largestSize)
+				largestSize = p.size;
+		}
+		return largestSize;
+	}
 
+	public void addJob(int size) {
+		lastJobID++;
+		jobQueue.add(new Job(lastJobID, size, 30));
+	}
+	
+	public void removeJob(int id) {
+		if (jobQueue.size() <= id)
+			return;
+		
+		for (int i = id + 1; i < jobQueue.size(); i++)
+			jobQueue.get(i).setId(i - 1);
+			
+		jobQueue.remove(id);
+		lastJobID--;
+	}
 }
