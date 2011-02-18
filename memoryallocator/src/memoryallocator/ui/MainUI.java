@@ -34,9 +34,8 @@ public class MainUI extends JFrame {
 	private JPanel jContentPane = null;
 	private JMenuBar mainJMenuBar = null;
 	private JMenu configureMenu = null;
-	private JMenuItem configureMenuItem = null;
 	private JMenuItem memoryMenuItem = null;
-	private JDialog memoryDialog = null;  //  @jve:decl-index=0:visual-constraint="451,61"
+	private JDialog memoryDialog = null;  //  @jve:decl-index=0:visual-constraint="781,48"
 	private JPanel memoryContentPane = null;
 	private Fields fields = null;
 	private JPanel setMemoryPanel = null;
@@ -46,9 +45,11 @@ public class MainUI extends JFrame {
 	private JPanel setMemoryPanel1 = null;
 	private JLabel setMemoryErrorLabel = null;
 	private CurrentMemoryPanel cMemoryPanel = null;
+	private CurrentMemoryPanel mainCMemoryPanel = null;
 	private JMenuItem configurePartitionsMenuItem = null;
 	private JCheckBoxMenuItem dynamicCheckBoxMenuItem = null;
 	private JMenuItem configureJobsMenuItem = null;
+	private JPanel memTopPanel = null;
 	/**
 	 * This is the default constructor
 	 */
@@ -64,7 +65,7 @@ public class MainUI extends JFrame {
 	 * @return void
 	 */
 	private void initialize() {
-		this.setSize(300, 200);
+		this.setSize(753, 574);
 		this.setJMenuBar(getMainJMenuBar());
 		this.setContentPane(getJContentPane());
 		this.setTitle("Memory Allocator");
@@ -80,6 +81,7 @@ public class MainUI extends JFrame {
 		if (jContentPane == null) {
 			jContentPane = new JPanel();
 			jContentPane.setLayout(new BorderLayout());
+			jContentPane.add(getMemTopPanel(), BorderLayout.NORTH);
 		}
 		return jContentPane;
 	}
@@ -125,14 +127,7 @@ public class MainUI extends JFrame {
 			memoryMenuItem.setText("Set memory size");
 			memoryMenuItem.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
-					if (cMemoryPanel != null) {
-						cMemoryPanel.setMemSize(fields.getMemSize());
-						cMemoryPanel.setAvailableSize(fields.getMemSize(), fields.getTotalPartSize());
-						cMemoryPanel.setTotalSize(fields.getTotalPartSize());
-					}
-					else {
-						cMemoryPanel = new CurrentMemoryPanel(fields.getMemSize(), fields.getTotalPartSize());
-					}
+					updateMemPanels();
 					getMemoryDialog().setVisible(true);
 				}
 			});
@@ -219,9 +214,7 @@ public class MainUI extends JFrame {
 						int memSize = Integer.parseInt(getSetMemoryTextField().getText());
 						fields.setMemSize(memSize);
 						setMemoryErrorLabel.setVisible(false);
-						cMemoryPanel.setMemSize(fields.getMemSize());
-						cMemoryPanel.setAvailableSize(fields.getMemSize(), fields.getTotalPartSize());
-						cMemoryPanel.setTotalSize(fields.getTotalPartSize());
+						updateMemPanels();
 					} catch (NumberFormatException ne) {
 						setMemoryErrorLabel.setVisible(true);
 					}
@@ -263,6 +256,7 @@ public class MainUI extends JFrame {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
 					JMenuItem source = (JMenuItem)e.getSource();
 					new ConfigurePartitionsDialog((JFrame)source.getTopLevelAncestor(), fields).setVisible(true);
+					updateMemPanels();
 				}
 			});
 		}
@@ -288,6 +282,7 @@ public class MainUI extends JFrame {
 						fields.setDynamic(false);
 						getConfigurePartitionsMenuItem().setVisible(true);
 					}
+					updateMemPanels();
 				}
 			});
 		}
@@ -307,9 +302,60 @@ public class MainUI extends JFrame {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
 					JMenuItem source = (JMenuItem)e.getSource();
 					new ConfigureJobsDialog((JFrame)source.getTopLevelAncestor(), fields).setVisible(true);
+					updateMemPanels();
 				}
 			});
 		}
 		return configureJobsMenuItem;
 	}
-}
+
+	private CurrentMemoryPanel getCMemoryPanel() {
+		if (cMemoryPanel == null) {
+			cMemoryPanel = new CurrentMemoryPanel(fields.getMemSize(), fields.getTotalPartSize());
+		}
+		else {
+			cMemoryPanel.setMemSize(fields.getMemSize());
+			cMemoryPanel.setAvailableSize(fields.getMemSize(), fields.getTotalPartSize());
+			cMemoryPanel.setTotalSize(fields.getTotalPartSize());
+		}
+		
+		return cMemoryPanel;
+	}	
+	
+	private CurrentMemoryPanel getMainCMemoryPanel() {
+		if (mainCMemoryPanel == null) {
+			mainCMemoryPanel = new CurrentMemoryPanel(fields.getMemSize(), fields.getTotalPartSize());
+		}
+		else {
+			mainCMemoryPanel.setMemSize(fields.getMemSize());
+			mainCMemoryPanel.setAvailableSize(fields.getMemSize(), fields.getTotalPartSize());
+			mainCMemoryPanel.setTotalSize(fields.getTotalPartSize());
+		}
+		
+		return mainCMemoryPanel;
+	}
+	
+	private void updateMemPanels() {
+		getCMemoryPanel();
+		getMainCMemoryPanel();
+		
+		getMemoryContentPane().revalidate();
+		getMemTopPanel().revalidate();
+	}
+	
+	/**
+	 * This method initializes memTopPanel	
+	 * 	
+	 * @return javax.swing.JPanel	
+	 */
+	private JPanel getMemTopPanel() {
+		if (memTopPanel == null) {
+			memTopPanel = new JPanel();
+			memTopPanel.setLayout(new BorderLayout());
+			memTopPanel.setPreferredSize(new Dimension(200, 50));
+
+			memTopPanel.add(getMainCMemoryPanel(), BorderLayout.NORTH);
+		}
+		return memTopPanel;
+	}
+}  //  @jve:decl-index=0:visual-constraint="10,10"

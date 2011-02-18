@@ -34,7 +34,13 @@ public class Fields {
 	}
 	public void setMemSize(int memSize) {
 		this.memSize = memSize;
-		if (memSize < totalPartSize) {
+		
+		if (dynamic == true) {
+			lastJobID = 0;
+			jobQueue = new LinkedList<Job>();
+		}
+		
+		if (dynamic == true || (dynamic == false && memSize < totalPartSize)) {
 			totalPartSize = 0;
 			partList = new LinkedList<Partition>();
 		}

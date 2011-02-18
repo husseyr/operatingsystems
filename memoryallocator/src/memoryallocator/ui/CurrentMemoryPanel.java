@@ -47,7 +47,7 @@ public class CurrentMemoryPanel extends JPanel {
 		memUsedLabel1 = new JLabel();
 		memUsedLabel1.setText("" + totalSize);
 		memUsedLabel = new JLabel();
-		memUsedLabel.setText("Memory used: ");
+		memUsedLabel.setText("Memory assigned to partitions: ");
 		memAssignedLabel = new JLabel();
 		memAssignedLabel.setText("" + (memSize - totalSize));
 		usedMemLabel = new JLabel();
