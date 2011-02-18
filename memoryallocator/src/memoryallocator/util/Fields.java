@@ -4,6 +4,7 @@
 package memoryallocator.util;
 
 import java.util.Deque;
+import java.util.LinkedList;
 import java.util.Queue;
 
 /**
@@ -11,27 +12,49 @@ import java.util.Queue;
  *
  */
 public class Fields {
-	private static int memSize;
-	private static Deque<Partition> partStack;
-	private static Queue<Job> jobQueue;
+	private int memSize;
+	private Deque<Partition> partStack;
+	private Queue<Job> jobQueue;
+	private static int totalPartSize;
 	
 	public Fields(int memSize, Deque<Partition> partStack, Queue<Job> jobQueue) {
 		this.memSize = memSize;
 		this.partStack = partStack;
 		this.jobQueue = jobQueue;
+		totalPartSize = 0;
 	}
 	
 	public int getMemSize() {
 		return memSize;
 	}
 	public void setMemSize(int memSize) {
-		Fields.memSize = memSize;
+		this.memSize = memSize;
+		totalPartSize = 0;
+		partStack = new LinkedList<Partition>();
 	}
-	public static Deque<Partition> getPartStack() {
+	public int getTotalPartSize() {
+		return totalPartSize;
+	}
+	public Deque<Partition> getPartStack() {
 		return partStack;
 	}
-	public static Queue<Job> getJobQueue() {
+	public Queue<Job> getJobQueue() {
 		return jobQueue;
+	}
+	
+	/**
+	 * Add partition to stack if it can fit.
+	 * @param size
+	 * @param memAddress
+	 * @return true if the partition was added, false if not
+	 */
+	public boolean addPartition(int size, int memAddress) {
+		if (totalPartSize + size <= memSize) {
+			partStack.push(new Partition(size, memAddress));
+			totalPartSize += size;
+			return true;
+		}
+		return false;
 	}
 
 }

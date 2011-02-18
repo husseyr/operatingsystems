@@ -22,6 +22,7 @@ import javax.swing.JButton;
 import memoryallocator.util.Fields;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JCheckBox;
+import javax.swing.WindowConstants;
 
 /**
  * @author rob
@@ -53,7 +54,7 @@ public class MainUI extends JFrame {
 	public MainUI(Fields fields) {
 		super();
 		this.fields = fields;
-		cMemoryPanel = new CurrentMemoryPanel(fields.getMemSize());
+		cMemoryPanel = new CurrentMemoryPanel(fields.getMemSize(), fields.getTotalPartSize());
 		initialize();
 	}
 
@@ -142,6 +143,7 @@ public class MainUI extends JFrame {
 			memoryDialog.setSize(new Dimension(447, 152));
 			memoryDialog.setModal(true);
 			memoryDialog.setTitle("Set memory size");
+			memoryDialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 			memoryDialog.setContentPane(getMemoryContentPane());
 		}
 		return memoryDialog;
