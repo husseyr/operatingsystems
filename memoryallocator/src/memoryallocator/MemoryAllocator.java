@@ -4,6 +4,7 @@
 package memoryallocator;
 
 import memoryallocator.ui.MainUI;
+import memoryallocator.util.Fields;
 
 /**
  * @author rob
@@ -16,7 +17,9 @@ public class MemoryAllocator {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		MainUI m = new MainUI(DEFAULT_MEMORY_SIZE);
+		Fields fields = new Fields();
+		fields.setMemSize(DEFAULT_MEMORY_SIZE);
+		MainUI m = new MainUI(fields);
 		m.setVisible(true);
 
 	}
