@@ -15,6 +15,12 @@ public class Fields {
 	private static Deque<Partition> partStack;
 	private static Queue<Job> jobQueue;
 	
+	public Fields(int memSize, Deque<Partition> partStack, Queue<Job> jobQueue) {
+		this.memSize = memSize;
+		this.partStack = partStack;
+		this.jobQueue = jobQueue;
+	}
+	
 	public int getMemSize() {
 		return memSize;
 	}
