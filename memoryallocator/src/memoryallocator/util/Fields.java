@@ -30,9 +30,10 @@ public class Fields {
 	}
 	public void setMemSize(int memSize) {
 		this.memSize = memSize;
-		if (memSize < totalPartSize)
+		if (memSize < totalPartSize) {
 			totalPartSize = 0;
-		partList = new LinkedList<Partition>();
+			partList = new LinkedList<Partition>();
+		}
 	}
 	public int getTotalPartSize() {
 		return totalPartSize;

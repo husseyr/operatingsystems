@@ -63,7 +63,7 @@ public class ConfigurePartitionsDialog extends JDialog {
 	 * @return void
 	 */
 	private void initialize() {
-		this.setSize(438, 360);
+		this.setSize(475, 475);
 		this.setTitle("Configure partitions");
 		this.setModal(true);
 		this.setContentPane(getJContentPane());
@@ -110,6 +110,9 @@ public class ConfigurePartitionsDialog extends JDialog {
 			addPartitionPanel.add(configurePartitionsLabel, null);
 			addPartitionPanel.add(getAddPartitionsPanel(), null);
 			addPartitionPanel.add(getPartitionListPanel(), null);
+
+			// show any partitions currents in the list
+			updatePartitions();
 		}
 		return addPartitionPanel;
 	}
@@ -136,6 +139,7 @@ public class ConfigurePartitionsDialog extends JDialog {
 							fields.addPartition(partSize, parts.get(parts.size() - 1).getStartAddress() + 
 									parts.get(parts.size() - 1).getSize());
 
+						getCMemoryPanel().setAvailableSize(fields.getMemSize(), fields.getTotalPartSize());
 						getCMemoryPanel().setTotalSize(fields.getTotalPartSize());
 						updatePartitions();
 					} catch (NumberFormatException ne) {
@@ -170,7 +174,7 @@ public class ConfigurePartitionsDialog extends JDialog {
 		if (partitionScrollPane == null) {
 			partitionScrollPane = new JScrollPane(partListPanel);
 			partitionScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-			partitionScrollPane.setPreferredSize(new Dimension(400, 200));
+			partitionScrollPane.setPreferredSize(new Dimension(450, 300));
 		}
 		return partitionScrollPane;
 	}
@@ -228,6 +232,7 @@ public class ConfigurePartitionsDialog extends JDialog {
 			public void actionPerformed(java.awt.event.ActionEvent e) {
 				fields.removePartition(id);
 				updatePartitions();
+				cMemoryPanel.setAvailableSize(fields.getMemSize(), fields.getTotalPartSize());
 				cMemoryPanel.setTotalSize(fields.getTotalPartSize());
 			}
 		});

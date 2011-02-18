@@ -125,6 +125,7 @@ public class MainUI extends JFrame {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
 					if (cMemoryPanel != null) {
 						cMemoryPanel.setMemSize(fields.getMemSize());
+						cMemoryPanel.setAvailableSize(fields.getMemSize(), fields.getTotalPartSize());
 						cMemoryPanel.setTotalSize(fields.getTotalPartSize());
 					}
 					else {
@@ -146,7 +147,7 @@ public class MainUI extends JFrame {
 	private JDialog getMemoryDialog() {
 		if (memoryDialog == null) {
 			memoryDialog = new JDialog(this);
-			memoryDialog.setSize(new Dimension(447, 152));
+			memoryDialog.setSize(new Dimension(509, 169));
 			memoryDialog.setModal(true);
 			memoryDialog.setTitle("Set memory size");
 			memoryDialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -217,6 +218,7 @@ public class MainUI extends JFrame {
 						fields.setMemSize(memSize);
 						setMemoryErrorLabel.setVisible(false);
 						cMemoryPanel.setMemSize(fields.getMemSize());
+						cMemoryPanel.setAvailableSize(fields.getMemSize(), fields.getTotalPartSize());
 						cMemoryPanel.setTotalSize(fields.getTotalPartSize());
 					} catch (NumberFormatException ne) {
 						setMemoryErrorLabel.setVisible(true);
