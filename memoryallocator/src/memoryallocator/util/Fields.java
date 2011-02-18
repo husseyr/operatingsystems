@@ -5,6 +5,7 @@ package memoryallocator.util;
 
 import java.util.Deque;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 
 /**
@@ -13,13 +14,13 @@ import java.util.Queue;
  */
 public class Fields {
 	private int memSize;
-	private Deque<Partition> partStack;
+	private List<Partition> partList;
 	private Queue<Job> jobQueue;
 	private static int totalPartSize;
 	
-	public Fields(int memSize, Deque<Partition> partStack, Queue<Job> jobQueue) {
+	public Fields(int memSize, List<Partition> partList, Queue<Job> jobQueue) {
 		this.memSize = memSize;
-		this.partStack = partStack;
+		this.partList = partList;
 		this.jobQueue = jobQueue;
 		totalPartSize = 0;
 	}
@@ -29,14 +30,15 @@ public class Fields {
 	}
 	public void setMemSize(int memSize) {
 		this.memSize = memSize;
-		totalPartSize = 0;
-		partStack = new LinkedList<Partition>();
+		if (memSize < totalPartSize)
+			totalPartSize = 0;
+		partList = new LinkedList<Partition>();
 	}
 	public int getTotalPartSize() {
 		return totalPartSize;
 	}
-	public Deque<Partition> getPartStack() {
-		return partStack;
+	public List<Partition> getPartList() {
+		return partList;
 	}
 	public Queue<Job> getJobQueue() {
 		return jobQueue;
@@ -50,11 +52,24 @@ public class Fields {
 	 */
 	public boolean addPartition(int size, int memAddress) {
 		if (totalPartSize + size <= memSize) {
-			partStack.push(new Partition(size, memAddress));
+			partList.add(new Partition(size, memAddress));
 			totalPartSize += size;
 			return true;
 		}
 		return false;
+	}
+	
+	public void removePartition(int id) {
+		if (partList.size() <= id)
+			return;
+		
+		int prevAddr = partList.get(id).startAddress;
+		for (int i = id + 1; i < partList.size(); i++) {
+			int curAddr = partList.get(i).startAddress;
+			partList.get(i).startAddress = prevAddr;
+			prevAddr = curAddr;
+		}
+		totalPartSize -= partList.remove(id).size;
 	}
 
 }

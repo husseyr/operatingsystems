@@ -54,7 +54,6 @@ public class MainUI extends JFrame {
 	public MainUI(Fields fields) {
 		super();
 		this.fields = fields;
-		cMemoryPanel = new CurrentMemoryPanel(fields.getMemSize(), fields.getTotalPartSize());
 		initialize();
 	}
 
@@ -124,6 +123,13 @@ public class MainUI extends JFrame {
 			memoryMenuItem.setText("Set memory size");
 			memoryMenuItem.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
+					if (cMemoryPanel != null) {
+						cMemoryPanel.setMemSize(fields.getMemSize());
+						cMemoryPanel.setTotalSize(fields.getTotalPartSize());
+					}
+					else {
+						cMemoryPanel = new CurrentMemoryPanel(fields.getMemSize(), fields.getTotalPartSize());
+					}
 					getMemoryDialog().setVisible(true);
 				}
 			});
@@ -211,6 +217,7 @@ public class MainUI extends JFrame {
 						fields.setMemSize(memSize);
 						setMemoryErrorLabel.setVisible(false);
 						cMemoryPanel.setMemSize(fields.getMemSize());
+						cMemoryPanel.setTotalSize(fields.getTotalPartSize());
 					} catch (NumberFormatException ne) {
 						setMemoryErrorLabel.setVisible(true);
 					}

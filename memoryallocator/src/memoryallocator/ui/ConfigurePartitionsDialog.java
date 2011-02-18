@@ -23,6 +23,7 @@ import javax.swing.JList;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import java.awt.GridLayout;
+import java.util.List;
 
 /**
  * @author rob
@@ -46,6 +47,7 @@ public class ConfigurePartitionsDialog extends JDialog {
 	private JPanel addPartitionsPanel = null;
 	private JLabel addPartitionLabel = null;
 	private JLabel invalidLabel = null;
+	
 	/**
 	 * @param owner
 	 */
@@ -126,12 +128,13 @@ public class ConfigurePartitionsDialog extends JDialog {
 					try {
 						int partSize = Integer.parseInt(getAddPartitionTextField().getText());
 						invalidLabel.setVisible(false); // no exception, no invalid error
+						List<Partition> parts = fields.getPartList();
 						
-						if (fields.getPartStack().isEmpty())
+						if (parts.isEmpty())
 							fields.addPartition(partSize, 0);
 						else
-							fields.addPartition(partSize, fields.getPartStack().peek().getStartAddress() + 
-									fields.getPartStack().peek().getSize());
+							fields.addPartition(partSize, parts.get(parts.size() - 1).getStartAddress() + 
+									parts.get(parts.size() - 1).getSize());
 
 						getCMemoryPanel().setTotalSize(fields.getTotalPartSize());
 						updatePartitions();
@@ -176,12 +179,9 @@ public class ConfigurePartitionsDialog extends JDialog {
 		partListPanel = null;
 		partListPanel = getPartListPanel();
 		
-		for (Partition p : fields.getPartStack()) {
-			JPanel itemPanel = new JPanel();
-			JLabel pLabel = new JLabel("Address: " + p.getStartAddress() + "Size: " + p.getSize());
-			JButton pButton = new JButton("Remove");
-			itemPanel.add(pLabel);
-			itemPanel.add(pButton);
+		for (int i = 0; i < fields.getPartList().size(); i++) {
+			Partition p = fields.getPartList().get(i);
+			JPanel itemPanel = createPartItemPanel(i, "" + i + ": Address = " + p.getStartAddress() + " Size = " + p.getSize());
 			partListPanel.add(itemPanel);
 		}
 		
@@ -213,6 +213,27 @@ public class ConfigurePartitionsDialog extends JDialog {
 			partListPanel.setLayout(new BoxLayout(getPartListPanel(), BoxLayout.Y_AXIS));
 		}
 		return partListPanel;
+	}
+	
+	private JPanel createPartItemPanel(final int id, String partLabelString) {
+		JPanel partItemPanel = new JPanel();
+		partItemPanel.setSize(400, 200);
+		partItemPanel.setLayout(new FlowLayout());
+		
+		JLabel partLabel = new JLabel(partLabelString);
+		partItemPanel.add(partLabel);
+		
+		JButton removeButton = new JButton("Remove");
+		removeButton.addActionListener(new java.awt.event.ActionListener() {
+			public void actionPerformed(java.awt.event.ActionEvent e) {
+				fields.removePartition(id);
+				updatePartitions();
+				cMemoryPanel.setTotalSize(fields.getTotalPartSize());
+			}
+		});
+		partItemPanel.add(removeButton);
+		
+		return partItemPanel;
 	}
 
 	/**
