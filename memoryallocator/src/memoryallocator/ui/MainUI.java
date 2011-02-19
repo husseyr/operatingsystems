@@ -1,6 +1,8 @@
 package memoryallocator.ui;
 
 import java.awt.BorderLayout;
+
+import javax.swing.ButtonGroup;
 import javax.swing.JPanel;
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
@@ -9,6 +11,8 @@ import javax.swing.JMenuItem;
 import javax.swing.JDialog;
 import java.awt.Dimension;
 import javax.swing.JLabel;
+
+import java.awt.Color;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.FlowLayout;
@@ -20,9 +24,16 @@ import javax.swing.JTextField;
 import javax.swing.JButton;
 
 import memoryallocator.util.Fields;
+import memoryallocator.util.Partition;
+import memoryallocator.util.SpreadsheetTable;
+
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JCheckBox;
 import javax.swing.WindowConstants;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.JRadioButtonMenuItem;
 
 /**
  * @author rob
@@ -50,6 +61,16 @@ public class MainUI extends JFrame {
 	private JCheckBoxMenuItem dynamicCheckBoxMenuItem = null;
 	private JMenuItem configureJobsMenuItem = null;
 	private JPanel memTopPanel = null;
+	private JPanel spreadsheetPanel = null;
+	private JScrollPane spreadsheetScrollPane = null;
+	private SpreadsheetTable spreadsheetTable = null;
+	private JPanel stepPanel = null;
+	private JButton stepButton = null;
+	private JMenu algorithmMenu = null;
+	private JRadioButtonMenuItem ffRadioButtonMenuItem = null;
+	private JRadioButtonMenuItem bfRadioButtonMenuItem = null;
+	private JRadioButtonMenuItem nfRadioButtonMenuItem = null;
+	private JRadioButtonMenuItem wfRadioButtonMenuItem = null;
 	/**
 	 * This is the default constructor
 	 */
@@ -82,6 +103,8 @@ public class MainUI extends JFrame {
 			jContentPane = new JPanel();
 			jContentPane.setLayout(new BorderLayout());
 			jContentPane.add(getMemTopPanel(), BorderLayout.NORTH);
+			jContentPane.add(getSpreadsheetPanel(), BorderLayout.WEST);
+			jContentPane.add(getStepPanel(), BorderLayout.SOUTH);
 		}
 		return jContentPane;
 	}
@@ -95,6 +118,7 @@ public class MainUI extends JFrame {
 		if (mainJMenuBar == null) {
 			mainJMenuBar = new JMenuBar();
 			mainJMenuBar.add(getConfigureMenu());
+			mainJMenuBar.add(getAlgorithmMenu());
 		}
 		return mainJMenuBar;
 	}
@@ -341,6 +365,8 @@ public class MainUI extends JFrame {
 		
 		getMemoryContentPane().revalidate();
 		getMemTopPanel().revalidate();
+		
+		updateSpreadsheetTable();
 	}
 	
 	/**
@@ -357,5 +383,230 @@ public class MainUI extends JFrame {
 			memTopPanel.add(getMainCMemoryPanel(), BorderLayout.NORTH);
 		}
 		return memTopPanel;
+	}
+
+	/**
+	 * This method initializes spreadsheetPanel	
+	 * 	
+	 * @return javax.swing.JPanel	
+	 */
+	private JPanel getSpreadsheetPanel() {
+		if (spreadsheetPanel == null) {
+			GridBagConstraints gridBagConstraints = new GridBagConstraints();
+			gridBagConstraints.fill = GridBagConstraints.BOTH;
+			gridBagConstraints.gridy = 0;
+			gridBagConstraints.weightx = 1.0;
+			gridBagConstraints.weighty = 1.0;
+			gridBagConstraints.gridx = 0;
+			spreadsheetPanel = new JPanel();
+			spreadsheetPanel.setLayout(new FlowLayout());
+		}
+		return spreadsheetPanel;
+	}
+
+	/**
+	 * This method initializes spreadsheetScrollPane	
+	 * 	
+	 * @return javax.swing.JScrollPane	
+	 */
+	private JScrollPane getSpreadsheetScrollPane() {
+		if (spreadsheetScrollPane == null) {
+			spreadsheetScrollPane = new JScrollPane();
+			spreadsheetScrollPane.setViewportView(getSpreadsheetTable());
+		}
+		return spreadsheetScrollPane;
+	}
+
+	/**
+	 * This method initializes spreadsheetTable	
+	 * 	
+	 * @return javax.swing.JTable	
+	 */
+	private SpreadsheetTable getSpreadsheetTable() {
+		if (spreadsheetTable == null) {
+			updateSpreadsheetTable();
+		}
+		return spreadsheetTable;
+	}
+	
+	private void updateSpreadsheetTable() {
+		Color unusedColor = Color.gray;
+		Color headerColor = getJContentPane().getBackground();
+		Color oldColor = Color.white;
+		
+		if (fields.isDynamic()) {
+			String[] colNames = {"Before Request","","After Request",""};
+			spreadsheetTable = new SpreadsheetTable(fields.getPartList().size() + 1, 4, colNames) {
+				private static final long serialVersionUID = 1L;
+				public boolean isCellEditable(int rowIndex, int colIndex) {
+					return false;   //Disallow the editing of any cell
+				}
+			};
+			
+			spreadsheetTable.setValue("Beginning Address", 0, 0, headerColor);
+			spreadsheetTable.setValue("Memory Block Size", 0, 1, headerColor);
+			spreadsheetTable.setValue("Beginning Address", 0, 2, headerColor);
+			spreadsheetTable.setValue("Memory Block Size", 0, 3, headerColor);
+			
+			for (int i = 0; i < fields.getPartList().size(); i++) {
+				Partition p = fields.getPartList().get(i);
+				spreadsheetTable.setValue(p.getStartAddress(), i+1, 0, oldColor);
+				spreadsheetTable.setValue(p.getSize(), i+1, 1, oldColor);
+				spreadsheetTable.setValue("", i+1, 2, unusedColor);
+				spreadsheetTable.setValue("", i+1, 3, unusedColor);
+			}
+		}
+		else {
+			String[] colNames = {"Partition Size","Memory Address","Access","Partition Status"};
+			spreadsheetTable = new SpreadsheetTable(fields.getPartList().size(), 4, colNames) {
+				private static final long serialVersionUID = 1L;
+				public boolean isCellEditable(int rowIndex, int colIndex) {
+					return false;   //Disallow the editing of any cell
+				}
+			};
+			
+			for (int i = 0; i < fields.getPartList().size(); i++) {
+				Partition p = fields.getPartList().get(i);
+				spreadsheetTable.setValue(p.getSize(), i, 0, oldColor);
+				spreadsheetTable.setValue(p.getStartAddress(), i, 1, oldColor);
+				if (p.getAccessJobID() == -1)
+					spreadsheetTable.setValue("", i, 2, oldColor);
+				else
+					spreadsheetTable.setValue(p.getAccessJobID(), i, 2, oldColor);
+				if (p.isBusy())
+					spreadsheetTable.setValue("Busy", i, 3, oldColor);
+				else
+					spreadsheetTable.setValue("Free", i, 3, oldColor);
+			}
+		}
+		
+		spreadsheetTable.updateUI();
+		spreadsheetPanel.remove(getSpreadsheetScrollPane());
+		spreadsheetScrollPane = null;
+		spreadsheetPanel.add(getSpreadsheetScrollPane());
+		spreadsheetPanel.revalidate();
+	}
+
+	/**
+	 * This method initializes stepPanel	
+	 * 	
+	 * @return javax.swing.JPanel	
+	 */
+	private JPanel getStepPanel() {
+		if (stepPanel == null) {
+			stepPanel = new JPanel();
+			stepPanel.setLayout(new FlowLayout());
+			stepPanel.setPreferredSize(new Dimension(200, 50));
+			stepPanel.add(getStepButton(), null);
+		}
+		return stepPanel;
+	}
+
+	/**
+	 * This method initializes stepButton	
+	 * 	
+	 * @return javax.swing.JButton	
+	 */
+	private JButton getStepButton() {
+		if (stepButton == null) {
+			stepButton = new JButton();
+			stepButton.setText("Step");
+		}
+		return stepButton;
+	}
+
+	/**
+	 * This method initializes algorithmMenu	
+	 * 	
+	 * @return javax.swing.JMenu	
+	 */
+	private JMenu getAlgorithmMenu() {
+		if (algorithmMenu == null) {
+			algorithmMenu = new JMenu();
+			algorithmMenu.setText("Algorithm");
+			ButtonGroup algoGroup = new ButtonGroup();
+			algoGroup.add(getFfRadioButtonMenuItem());
+			algoGroup.add(getBfRadioButtonMenuItem());
+			algoGroup.add(getNfRadioButtonMenuItem());
+			algoGroup.add(getWfRadioButtonMenuItem());
+			ffRadioButtonMenuItem.setSelected(true);
+			algorithmMenu.add(ffRadioButtonMenuItem);
+			algorithmMenu.add(bfRadioButtonMenuItem);
+			algorithmMenu.add(nfRadioButtonMenuItem);
+			algorithmMenu.add(wfRadioButtonMenuItem);
+		}
+		return algorithmMenu;
+	}
+
+	/**
+	 * This method initializes ffRadioButtonMenuItem	
+	 * 	
+	 * @return javax.swing.JRadioButtonMenuItem	
+	 */
+	private JRadioButtonMenuItem getFfRadioButtonMenuItem() {
+		if (ffRadioButtonMenuItem == null) {
+			ffRadioButtonMenuItem = new JRadioButtonMenuItem();
+			ffRadioButtonMenuItem.setText("First-fit");
+			ffRadioButtonMenuItem.addActionListener(new java.awt.event.ActionListener() {
+				public void actionPerformed(java.awt.event.ActionEvent e) {
+					fields.setAlgorithm(0);
+				}
+			});
+		}
+		return ffRadioButtonMenuItem;
+	}
+
+	/**
+	 * This method initializes bfRadioButtonMenuItem	
+	 * 	
+	 * @return javax.swing.JRadioButtonMenuItem	
+	 */
+	private JRadioButtonMenuItem getBfRadioButtonMenuItem() {
+		if (bfRadioButtonMenuItem == null) {
+			bfRadioButtonMenuItem = new JRadioButtonMenuItem();
+			bfRadioButtonMenuItem.setText("Best-fit");
+			bfRadioButtonMenuItem.addActionListener(new java.awt.event.ActionListener() {
+				public void actionPerformed(java.awt.event.ActionEvent e) {
+					fields.setAlgorithm(1);
+				}
+			});
+		}
+		return bfRadioButtonMenuItem;
+	}
+
+	/**
+	 * This method initializes nfRadioButtonMenuItem	
+	 * 	
+	 * @return javax.swing.JRadioButtonMenuItem	
+	 */
+	private JRadioButtonMenuItem getNfRadioButtonMenuItem() {
+		if (nfRadioButtonMenuItem == null) {
+			nfRadioButtonMenuItem = new JRadioButtonMenuItem();
+			nfRadioButtonMenuItem.setText("Next-fit");
+			nfRadioButtonMenuItem.addActionListener(new java.awt.event.ActionListener() {
+				public void actionPerformed(java.awt.event.ActionEvent e) {
+					fields.setAlgorithm(1);
+				}
+			});
+		}
+		return nfRadioButtonMenuItem;
+	}
+
+	/**
+	 * This method initializes wfRadioButtonMenuItem	
+	 * 	
+	 * @return javax.swing.JRadioButtonMenuItem	
+	 */
+	private JRadioButtonMenuItem getWfRadioButtonMenuItem() {
+		if (wfRadioButtonMenuItem == null) {
+			wfRadioButtonMenuItem = new JRadioButtonMenuItem();
+			wfRadioButtonMenuItem.setText("Worst-fit");
+			wfRadioButtonMenuItem.addActionListener(new java.awt.event.ActionListener() {
+				public void actionPerformed(java.awt.event.ActionEvent e) {
+					fields.setAlgorithm(2);
+				}
+			});
+		}
+		return wfRadioButtonMenuItem;
 	}
 }  //  @jve:decl-index=0:visual-constraint="10,10"

@@ -31,4 +31,15 @@ public class Partition {
 	public int getStartAddress() {
 		return startAddress;
 	}
+	
+	public int getAccessJobID() {
+		if (accessJob == null) 
+			return -1;
+		
+		return accessJob.getId();
+	}
+	
+	public boolean isBusy() {
+		return status;
+	}
 }

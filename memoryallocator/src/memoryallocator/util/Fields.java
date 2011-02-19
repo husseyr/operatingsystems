@@ -19,6 +19,7 @@ public class Fields {
 	private static int totalPartSize;
 	private boolean dynamic;
 	private static int lastJobID;
+	private int algorithm; // 0=first-fit, 1=best-fit, 2=next-fit, 3=worst-fit
 	
 	public Fields(int memSize, List<Partition> partList, List<Job> jobQueue) {
 		this.memSize = memSize;
@@ -27,6 +28,7 @@ public class Fields {
 		dynamic = false;
 		totalPartSize = 0;
 		lastJobID = -1; // -1 since there is no last job at this point
+		algorithm = 0;
 	}
 	
 	public int getMemSize() {
@@ -116,5 +118,9 @@ public class Fields {
 			
 		jobQueue.remove(id);
 		lastJobID--;
+	}
+	
+	public void setAlgorithm(int algorithm) {
+		this.algorithm = algorithm;
 	}
 }
