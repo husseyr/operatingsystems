@@ -15,6 +15,9 @@ import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.FlowLayout;
 import java.awt.event.ItemEvent;
+import java.util.LinkedList;
+import java.util.List;
+
 import javax.swing.JTextField;
 import javax.swing.JButton;
 import memoryallocator.util.Fields;
@@ -509,9 +512,9 @@ public class MainUI extends JFrame {
 	
 	private void updateLists() {
 		String[] listStrings = new String[fields.getJobList().size()];
-		for (int i = 0; i < fields.getJobList().size(); i++) {
-			listStrings[i] = "Job " + fields.getJobList().get(i).getId() + ": Size = " + fields.getJobList().get(i).getSize() + 
-				" Time: " + fields.getJobList().get(i).getCompletionTime();
+		int index = 0;
+		for (Job j : fields.getJobList()) {
+			listStrings[index++] = "Job " + j.getId() + ": Size = " + j.getSize() + " Time: " + j.getCompletionTime();
 		}
 		
 		getJobPanel().remove(jobListScrollPane);
@@ -522,7 +525,7 @@ public class MainUI extends JFrame {
 		jobPanel.revalidate();
 		
 		listStrings = new String[fields.getWaitingQueue().size()];
-		int index = 0;
+		index = 0;
 		for (Job j : fields.getWaitingQueue())
 			listStrings[index++] = "Job " + j.getId() + ": Size = " + j.getSize() + " Time = " + j.getCompletionTime();
 		
@@ -533,6 +536,21 @@ public class MainUI extends JFrame {
 		waitingPanel.add(waitingScrollPane);
 		waitingPanel.revalidate();
 		
+		listStrings = new String[fields.getPartList().size()];
+		index = 0;
+		for (Partition p : fields.getPartList()) {
+			if (p.isBusy()) {
+				Job j = p.getAccessJob();
+				listStrings[index++] = "Job " + j.getId() + ": Size = " + j.getSize() + " Time = " + j.getCompletionTime();
+			}
+		}
+		
+		getBottomPanel().remove(bottomScrollPane);
+		getBottomList(listStrings);
+		bottomScrollPane = null;
+		getBottomScrollPane();
+		bottomPanel.add(bottomScrollPane);
+		bottomPanel.revalidate();
 	}
 
 	/**

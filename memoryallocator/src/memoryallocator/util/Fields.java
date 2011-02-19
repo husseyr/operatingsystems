@@ -172,6 +172,16 @@ public class Fields {
 		}
 	}
 	
+	private void assignDynamicPartition(Partition p, Job j) {
+		Partition freePartition = new Partition(lastPartID + 1, p.size - j.getSize(), p.startAddress + j.getSize());
+		freePartition.oldAddress = p.startAddress;
+		freePartition.oldSize = p.size;
+		p.setSize(j.getSize());
+		freeList.add(freePartition);
+		fixPartitionOrder();
+		partList.add(freePartition);
+	}
+	
 	private boolean firstFit(Job j) {
 		// go through partitions in their current order - find first fit for job
 		for (Partition p : freeList) {
@@ -179,13 +189,8 @@ public class Fields {
 				p.assignJob(j);
 				lastPartAssigned = p.id;
 				freeList.remove(p);
-				if (dynamic && j.getSize() < p.getSize()) {
-					Partition freePartition = new Partition(lastPartID + 1, p.size - j.getSize(), p.startAddress + j.getSize());
-					p.setSize(j.getSize());
-					freePartition.oldAddress = p.startAddress;
-					freePartition.oldSize = p.size;
-					freeList.add(freePartition);
-				}
+				if (dynamic && j.getSize() < p.getSize())
+					assignDynamicPartition(p, j);
 				
 				return true;
 			}
@@ -216,6 +221,9 @@ public class Fields {
 				p.assignJob(j);
 				freeList.remove(p);
 				lastPartAssigned = p.id;
+				if (dynamic && j.getSize() < p.getSize())
+					assignDynamicPartition(p, j);
+				
 				return true;
 			}
 		}
@@ -246,6 +254,9 @@ public class Fields {
 				p.assignJob(j);
 				freeList.remove(p);
 				lastPartAssigned = p.id;
+				if (dynamic && j.getSize() < p.getSize())
+					assignDynamicPartition(p, j);
+				
 				return true;
 			}
 		}
@@ -285,6 +296,9 @@ public class Fields {
 				p.assignJob(j);
 				freeList.remove(p);
 				lastPartAssigned = p.id;
+				if (dynamic && j.getSize() < p.getSize())
+					assignDynamicPartition(p, j);
+				
 				return true;
 			}
 		}
@@ -307,6 +321,15 @@ public class Fields {
 			worstFit(jobList.remove(0));
 	}
 	
+	public void fixPartitionOrder() {
+		Partition[] partsArray = Arrays.copyOf(freeList.toArray(), freeList.size(), Partition[].class);
+		Arrays.sort(partsArray, new PartitionAddressComparator());
+		freeList = new LinkedList<Partition>();
+		for (Partition p : partsArray) {
+			freeList.add(p);
+		}
+	}
+	
 	public void updateTimes() {
 		for (Partition p : partList) {
 			if (p.accessJob != null) {
@@ -315,10 +338,12 @@ public class Fields {
 				if (p.accessJob.completionTime == 0) {
 					p.removeJob();
 					freeList.add(p);
-					if (dynamic)
-						deallocate();
+					fixPartitionOrder();
 				}
 			}
 		}
+
+		if (dynamic)
+			deallocate();
 	}
 }

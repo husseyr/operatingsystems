@@ -44,7 +44,7 @@ public class Job {
 		this.id = id;
 	}
 	
-	public Partition getPartIdAssigned() {
+	public Partition getPartAssigned() {
 		return partAssigned;
 	}
 

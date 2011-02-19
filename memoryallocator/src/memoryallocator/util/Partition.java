@@ -46,6 +46,10 @@ public class Partition implements Comparable<Partition> {
 		return oldAddress;
 	}
 	
+	public Job getAccessJob() {
+		return accessJob;
+	}
+	
 	public int getAccessJobID() {
 		if (accessJob == null) 
 			return -1;
@@ -70,10 +74,6 @@ public class Partition implements Comparable<Partition> {
 	}
 
 	public int compareTo(Partition arg0) {
-		if (size > arg0.size)
-			return 1;
-		if (size < arg0.size)
-			return -1;
-		return 0;
+		return size - arg0.size;
 	}
 }
