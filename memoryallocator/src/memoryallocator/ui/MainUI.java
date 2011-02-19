@@ -18,7 +18,6 @@ import java.awt.event.ItemEvent;
 import javax.swing.JTextField;
 import javax.swing.JButton;
 import memoryallocator.util.Fields;
-import memoryallocator.util.Job;
 import memoryallocator.util.Partition;
 import memoryallocator.util.SpreadsheetTable;
 import javax.swing.JCheckBoxMenuItem;
@@ -26,6 +25,9 @@ import javax.swing.WindowConstants;
 import javax.swing.JScrollPane;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.BoxLayout;
+import javax.swing.JList;
+import javax.swing.BorderFactory;
+import javax.swing.JSplitPane;
 
 /**
  * @author rob
@@ -69,6 +71,17 @@ public class MainUI extends JFrame {
 	private JPanel topRightPanel = null;
 	private JLabel dynamicLabel = null;
 	private JLabel dynamicInfoLabel = null;
+	private JPanel jobPanel = null;
+	private JList jobJList = null;
+	private JPanel listsPanel = null;
+	private JSplitPane listsSplitPane = null;
+	private JPanel waitingPanel = null;
+	private JPanel bottomPanel = null;
+	private JList bottomList = null;
+	private JScrollPane jobListScrollPane = null;
+	private JScrollPane waitingScrollPane = null;
+	private JList waitingList = null;
+	private JScrollPane bottomScrollPane = null;
 	
 	/**
 	 * This is the default constructor
@@ -85,7 +98,7 @@ public class MainUI extends JFrame {
 	 * @return void
 	 */
 	private void initialize() {
-		this.setSize(753, 574);
+		this.setSize(820, 575);
 		this.setJMenuBar(getMainJMenuBar());
 		this.setContentPane(getJContentPane());
 		this.setTitle("Memory Allocator");
@@ -104,6 +117,7 @@ public class MainUI extends JFrame {
 			jContentPane.add(getMemTopPanel(), BorderLayout.NORTH);
 			jContentPane.add(getSpreadsheetPanel(), BorderLayout.WEST);
 			jContentPane.add(getStepPanel(), BorderLayout.SOUTH);
+			jContentPane.add(getListsPanel(), BorderLayout.EAST);
 		}
 		return jContentPane;
 	}
@@ -397,6 +411,7 @@ public class MainUI extends JFrame {
 		if (spreadsheetPanel == null) {
 			spreadsheetPanel = new JPanel();
 			spreadsheetPanel.setLayout(new BoxLayout(getSpreadsheetPanel(), BoxLayout.Y_AXIS));
+			updateSpreadsheetTable();
 		}
 		return spreadsheetPanel;
 	}
@@ -482,6 +497,23 @@ public class MainUI extends JFrame {
 		spreadsheetScrollPane = null;
 		spreadsheetPanel.add(getSpreadsheetScrollPane());
 		spreadsheetPanel.revalidate();
+		
+		updateJobPanel();
+	}
+	
+	private void updateJobPanel() {
+		String[] jobListStrings = new String[fields.getJobList().size()];
+		for (int i = 0; i < fields.getJobList().size(); i++) {
+			jobListStrings[i] = "Job " + fields.getJobList().get(i).getId() + ": Size = " + fields.getJobList().get(i).getSize() + 
+				" Time: " + fields.getJobList().get(i).getCompletionTime();
+		}
+		
+		getJobPanel().remove(jobListScrollPane);
+		getJobJList(jobListStrings);
+		jobListScrollPane = null;
+		getJobListScrollPane();
+		jobPanel.add(jobListScrollPane);
+		jobPanel.revalidate();
 	}
 
 	/**
@@ -525,6 +557,8 @@ public class MainUI extends JFrame {
 						fields.worstFit();
 						break;
 					}
+					fields.updateTimes();
+					updateMemPanels();
 				}
 			});
 		}
@@ -603,7 +637,7 @@ public class MainUI extends JFrame {
 			nfRadioButtonMenuItem.setText("Next-fit");
 			nfRadioButtonMenuItem.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
-					fields.setAlgorithm(1);
+					fields.setAlgorithm(2);
 					algoInfoLabel.setText("Next-fit");
 				}
 			});
@@ -622,7 +656,7 @@ public class MainUI extends JFrame {
 			wfRadioButtonMenuItem.setText("Worst-fit");
 			wfRadioButtonMenuItem.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
-					fields.setAlgorithm(2);
+					fields.setAlgorithm(3);
 					algoInfoLabel.setText("Worst-fit");
 				}
 			});
@@ -681,5 +715,167 @@ public class MainUI extends JFrame {
 			topRightPanel.add(dynamicInfoLabel, gridBagConstraints4);
 		}
 		return topRightPanel;
+	}
+
+	/**
+	 * This method initializes jobPanel	
+	 * 	
+	 * @return javax.swing.JPanel	
+	 */
+	private JPanel getJobPanel() {
+		if (jobPanel == null) {
+			jobPanel = new JPanel();
+			jobPanel.setLayout(new BoxLayout(jobPanel, BoxLayout.Y_AXIS));
+			jobPanel.setPreferredSize(new Dimension(200, 200));
+			jobPanel.setBackground(Color.white);
+			jobPanel.setBorder(BorderFactory.createLineBorder(Color.gray, 1));
+			jobPanel.add(getJobListScrollPane(), null);
+		}
+		return jobPanel;
+	}
+
+	/**
+	 * This method initializes jobList	
+	 * 	
+	 * @return javax.swing.JList	
+	 */
+	private JList getJobJList(String[] data) {
+		if (data == null && jobJList == null) {
+			jobJList = new JList();
+		}
+		else if (data != null)
+			jobJList = new JList(data);
+		
+		return jobJList;
+	}
+
+	/**
+	 * This method initializes listsPanel	
+	 * 	
+	 * @return javax.swing.JPanel	
+	 */
+	private JPanel getListsPanel() {
+		if (listsPanel == null) {
+			listsPanel = new JPanel();
+			listsPanel.setLayout(new BorderLayout());
+			listsPanel.add(getListsSplitPane(), BorderLayout.NORTH);
+			listsPanel.add(getBottomPanel(), BorderLayout.CENTER);
+		}
+		return listsPanel;
+	}
+
+	/**
+	 * This method initializes listsSplitPane	
+	 * 	
+	 * @return javax.swing.JSplitPane	
+	 */
+	private JSplitPane getListsSplitPane() {
+		if (listsSplitPane == null) {
+			listsSplitPane = new JSplitPane();
+			listsSplitPane.setDividerSize(1);
+			listsSplitPane.setDividerLocation(175);
+			listsSplitPane.setPreferredSize(new Dimension(350, 150));
+			listsSplitPane.setLeftComponent(getJobPanel());
+			listsSplitPane.setRightComponent(getWaitingPanel());
+		}
+		return listsSplitPane;
+	}
+
+	/**
+	 * This method initializes waitingPanel	
+	 * 	
+	 * @return javax.swing.JPanel	
+	 */
+	private JPanel getWaitingPanel() {
+		if (waitingPanel == null) {
+			waitingPanel = new JPanel();
+			waitingPanel.setLayout(new BoxLayout(waitingPanel, BoxLayout.Y_AXIS));
+			waitingPanel.setPreferredSize(new Dimension(200, 200));
+			waitingPanel.setBackground(Color.white);
+			waitingPanel.setBorder(BorderFactory.createLineBorder(Color.gray, 1));
+			waitingPanel.add(getWaitingScrollPane(), null);
+		}
+		return waitingPanel;
+	}
+
+	/**
+	 * This method initializes bottomPanel	
+	 * 	
+	 * @return javax.swing.JPanel	
+	 */
+	private JPanel getBottomPanel() {
+		if (bottomPanel == null) {
+			bottomPanel = new JPanel();
+			bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.Y_AXIS));
+			bottomPanel.setBackground(Color.white);
+			bottomPanel.setBorder(BorderFactory.createLineBorder(Color.gray, 1));
+			bottomPanel.setPreferredSize(new Dimension(100, 100));
+			bottomPanel.add(getBottomScrollPane(), null);
+		}
+		return bottomPanel;
+	}
+
+	/**
+	 * This method initializes bottomList	
+	 * 	
+	 * @return javax.swing.JList	
+	 */
+	private JList getBottomList() {
+		if (bottomList == null) {
+			bottomList = new JList();
+			bottomList.setPreferredSize(new Dimension(100, 100));
+		}
+		return bottomList;
+	}
+
+	/**
+	 * This method initializes jobListScrollPane	
+	 * 	
+	 * @return javax.swing.JScrollPane	
+	 */
+	private JScrollPane getJobListScrollPane() {
+		if (jobListScrollPane == null) {
+			jobListScrollPane = new JScrollPane();
+			jobListScrollPane.setViewportView(getJobJList(null));
+		}
+		return jobListScrollPane;
+	}
+
+	/**
+	 * This method initializes waitingScrollPane	
+	 * 	
+	 * @return javax.swing.JScrollPane	
+	 */
+	private JScrollPane getWaitingScrollPane() {
+		if (waitingScrollPane == null) {
+			waitingScrollPane = new JScrollPane();
+			waitingScrollPane.setViewportView(getWaitingList());
+		}
+		return waitingScrollPane;
+	}
+
+	/**
+	 * This method initializes waitingList	
+	 * 	
+	 * @return javax.swing.JList	
+	 */
+	private JList getWaitingList() {
+		if (waitingList == null) {
+			waitingList = new JList();
+		}
+		return waitingList;
+	}
+
+	/**
+	 * This method initializes bottomScrollPane	
+	 * 	
+	 * @return javax.swing.JScrollPane	
+	 */
+	private JScrollPane getBottomScrollPane() {
+		if (bottomScrollPane == null) {
+			bottomScrollPane = new JScrollPane();
+			bottomScrollPane.setViewportView(getBottomList());
+		}
+		return bottomScrollPane;
 	}
 }  //  @jve:decl-index=0:visual-constraint="10,10"

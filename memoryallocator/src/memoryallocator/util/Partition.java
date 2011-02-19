@@ -7,7 +7,7 @@ package memoryallocator.util;
  * @author rob
  *
  */
-public class Partition {
+public class Partition implements Comparable<Partition> {
 	protected int id;
 	protected int size;			// every partition needs a size
 	protected int startAddress;	// where the partition starts in memory
@@ -46,7 +46,22 @@ public class Partition {
 	}
 	
 	public void assignJob(Job accessJob) {
+		accessJob.partAssigned = this;
 		this.accessJob = accessJob;
 		status = true;
+	}
+	
+	public void removeJob() {
+		accessJob.partAssigned = null;
+		this.accessJob = null;
+		status = false;
+	}
+
+	public int compareTo(Partition arg0) {
+		if (size > arg0.size)
+			return 1;
+		if (size < arg0.size)
+			return -1;
+		return 0;
 	}
 }

@@ -136,6 +136,12 @@ public class ConfigurePartitionsDialog extends JDialog {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
 					try {
 						int partSize = Integer.parseInt(getAddPartitionTextField().getText());
+						if (fields.getTotalPartSize() + partSize > fields.getMemSize()) {
+							invalidLabel.setText("Partition size too large");
+							invalidLabel.setVisible(true);
+							return;
+						}
+						
 						invalidLabel.setVisible(false); // no exception, no invalid error
 						List<Partition> parts = fields.getPartList();
 						

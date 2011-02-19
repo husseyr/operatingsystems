@@ -70,6 +70,7 @@ public class ConfigureJobsDialog extends JDialog {
 	 */
 	private void initialize() {
 		this.setSize(475, 475);
+		this.setTitle("Configure jobs");
 		this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		this.setModal(true);
 		this.setPreferredSize(new Dimension(256, 119));

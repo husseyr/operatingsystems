@@ -9,6 +9,7 @@ import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.Random;
 
 /**
  * @author rob
@@ -45,12 +46,9 @@ public class Fields {
 	public void setMemSize(int memSize) {
 		this.memSize = memSize;
 		
-		if (dynamic == true) {
+		if (dynamic == true || (dynamic == false && memSize < totalPartSize)) {
 			lastJobID = 0;
 			jobList = new LinkedList<Job>();
-		}
-		
-		if (dynamic == true || (dynamic == false && memSize < totalPartSize)) {
 			totalPartSize = 0;
 			partList = new LinkedList<Partition>();
 		}
@@ -62,13 +60,13 @@ public class Fields {
 		return partList;
 	}
 	public Partition[] getOrderedPartArray() {
-		Partition[] oParts = (Partition[]) partList.toArray();
+		Partition[] oParts = Arrays.copyOf(partList.toArray(), partList.size(), Partition[].class);
 		Arrays.sort(oParts);
 		
 		return oParts;
 	}
 	public Partition[] getReverseOrderedPartArray() {
-		Partition[] oParts = (Partition[]) partList.toArray();
+		Partition[] oParts = Arrays.copyOf(partList.toArray(), partList.size(), Partition[].class);
 		Arrays.sort(oParts, Collections.reverseOrder());
 		
 		return oParts;
@@ -96,14 +94,10 @@ public class Fields {
 	 * @param memAddress
 	 * @return true if the partition was added, false if not
 	 */
-	public boolean addPartition(int size, int memAddress) {
+	public void addPartition(int size, int memAddress) {
 		lastPartID++;
-		if (totalPartSize + size <= memSize) {
-			partList.add(new Partition(lastPartID, size, memAddress));
-			totalPartSize += size;
-			return true;
-		}
-		return false;
+		partList.add(new Partition(lastPartID, size, memAddress));
+		totalPartSize += size;
 	}
 	
 	public void removePartition(int id) {
@@ -130,7 +124,9 @@ public class Fields {
 
 	public void addJob(int size) {
 		lastJobID++;
-		jobList.add(new Job(lastJobID, size, 30));
+		
+		Random rand = new Random();
+		jobList.add(new Job(lastJobID, size, rand.nextInt(10) + 2));
 	}
 	
 	public void removeJob(int id) {
@@ -152,77 +148,137 @@ public class Fields {
 		return algorithm;
 	}
 	
-	public void firstFit() {
-		if (jobList.isEmpty())
-			return;
-		
-		Job nextJob = jobList.remove(0);
+	private boolean firstFit(Job j) {
+		// go through partitions in their current order - find first fit for job
 		for (Partition p : partList) {
-			if (!p.isBusy() && p.getSize() >= nextJob.getSize()) {
-				p.assignJob(nextJob);
+			if (!p.isBusy() && p.getSize() >= j.getSize()) {
+				p.assignJob(j);
 				lastPartAssigned = p.id;
-				return;
+				return true;
 			}
 		}
 		
-		waitingQueue.add(nextJob);
+		waitingQueue.add(j);
+		return false;
+	}
+	
+	public void firstFit() {
+		// try to find something in the waiting queue that will fit first
+		if (!waitingQueue.isEmpty()) {
+			for (int i = 0; i < waitingQueue.size(); i++) {
+				if (firstFit(waitingQueue.remove()))
+					return;
+			}
+		}
+
+		// if nothing works in waiting queue - try a new job
+		if (!jobList.isEmpty())
+			firstFit(jobList.remove(0));
+	}
+	
+	private boolean bestFit(Job j) {
+		// get partitions sorted smallest to largest - find first (smallest) fit
+		for (Partition p : getOrderedPartArray()) {
+			if (!p.isBusy() && p.getSize() >= j.getSize()) {
+				p.assignJob(j);
+				lastPartAssigned = p.id;
+				return true;
+			}
+		}
+		
+		waitingQueue.add(j);
+		return false;
 	}
 	
 	public void bestFit() {
-		if (jobList.isEmpty())
-			return;
-		
-		Job nextJob = jobList.remove(0);
-		for (Partition p : getOrderedPartArray()) {
-			if (!p.isBusy() && p.getSize() >= nextJob.getSize()) {
-				p.assignJob(nextJob);
-				lastPartAssigned = p.id;
-				return;
+		// try to find something in the waiting queue that will fit first
+		if (!waitingQueue.isEmpty()) {
+			for (int i = 0; i < waitingQueue.size(); i++) {
+				if (bestFit(waitingQueue.remove()))
+					return;
 			}
 		}
-		
-		waitingQueue.add(nextJob);
+
+		// if nothing works in waiting queue - try a new job
+		if (!jobList.isEmpty())
+			bestFit(jobList.remove(0));
 	}
 
-	public void nextFit() {
-		if (jobList.isEmpty())
-			return;
-		
-		Job nextJob = jobList.remove(0);
+	private boolean nextFit(Job j) {
+		// start search at whatever partition last assigned a job
 		for (int i = lastPartAssigned; i < partList.size(); i++) {
 			Partition p = partList.get(i);
-			if (!p.isBusy() && p.getSize() >= nextJob.getSize()) {
-				p.assignJob(nextJob);
+			if (!p.isBusy() && p.getSize() >= j.getSize()) {
+				p.assignJob(j);
 				lastPartAssigned = p.id;
-				return;
+				return true;
 			}
 		}
 		
+		// nothing from last partition to end, start from beginning
 		for (int i = 0; i < lastPartAssigned; i++) {
 			Partition p = partList.get(i);
-			if (!p.isBusy() && p.getSize() >= nextJob.getSize()) {
-				p.assignJob(nextJob);
+			if (!p.isBusy() && p.getSize() >= j.getSize()) {
+				p.assignJob(j);
 				lastPartAssigned = p.id;
-				return;
+				return true;
+			}
+		}
+		
+		waitingQueue.add(j);
+		return false;
+	}
+	
+	public void nextFit() {
+		// try to find something in the waiting queue that will fit first
+		if (!waitingQueue.isEmpty()) {
+			for (int i = 0; i < waitingQueue.size(); i++) {
+				if (nextFit(waitingQueue.remove()))
+					return;
 			}
 		}
 
-		waitingQueue.add(nextJob);
+		// if nothing works in waiting queue - try a new job
+		if (!jobList.isEmpty())
+			nextFit(jobList.remove(0));
 	}
 
-	public void worstFit() {
-		if (jobList.isEmpty())
-			return;
-		
-		Job nextJob = jobList.remove(0);
+	private boolean worstFit(Job j) {
+		// get partitions sorted biggest to smallest and find first (biggest) that it will fit
 		for (Partition p : getReverseOrderedPartArray()) {
-			if (!p.isBusy() && p.getSize() >= nextJob.getSize()) {
-				p.assignJob(nextJob);
+			if (!p.isBusy() && p.getSize() >= j.getSize()) {
+				p.assignJob(j);
 				lastPartAssigned = p.id;
-				return;
+				return true;
 			}
 		}
 		
-		waitingQueue.add(nextJob);
+		waitingQueue.add(j);
+		return false;
+	}
+	
+	public void worstFit() {
+		// try to find something in the waiting queue that will fit first
+		if (!waitingQueue.isEmpty()) {
+			for (int i = 0; i < waitingQueue.size(); i++) {
+				if (worstFit(waitingQueue.remove()))
+					return;
+			}
+		}
+
+		// if nothing works in waiting queue - try a new job
+		if (!jobList.isEmpty())
+			worstFit(jobList.remove(0));
+	}
+	
+	public void updateTimes() {
+		for (Partition p : partList) {
+			if (p.accessJob != null) {
+				p.accessJob.completionTime--;
+				
+				if (p.accessJob.completionTime == 0)
+					p.removeJob();
+			}
+		}
 	}
 }
