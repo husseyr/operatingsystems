@@ -42,4 +42,9 @@ public class Partition {
 	public boolean isBusy() {
 		return status;
 	}
+	
+	public void assignJob(Job accessJob) {
+		this.accessJob = accessJob;
+		status = true;
+	}
 }

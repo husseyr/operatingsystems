@@ -17,6 +17,7 @@ import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.FlowLayout;
 import java.awt.event.ItemEvent;
+import java.util.Queue;
 /**
  * 
  */
@@ -24,6 +25,7 @@ import javax.swing.JTextField;
 import javax.swing.JButton;
 
 import memoryallocator.util.Fields;
+import memoryallocator.util.Job;
 import memoryallocator.util.Partition;
 import memoryallocator.util.SpreadsheetTable;
 
@@ -34,6 +36,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.JRadioButtonMenuItem;
+import javax.swing.BoxLayout;
 
 /**
  * @author rob
@@ -71,6 +74,12 @@ public class MainUI extends JFrame {
 	private JRadioButtonMenuItem bfRadioButtonMenuItem = null;
 	private JRadioButtonMenuItem nfRadioButtonMenuItem = null;
 	private JRadioButtonMenuItem wfRadioButtonMenuItem = null;
+	private JPanel algoPanel = null;
+	private JLabel algoLabel = null;
+	private JLabel algoInfoLabel = null;
+	private JPanel topRightPanel = null;
+	private JLabel dynamicLabel = null;
+	private JLabel dynamicInfoLabel = null;
 	/**
 	 * This is the default constructor
 	 */
@@ -301,10 +310,12 @@ public class MainUI extends JFrame {
 					if (e.getStateChange() == ItemEvent.SELECTED) {
 						fields.setDynamic(true);
 						getConfigurePartitionsMenuItem().setVisible(false);
+						dynamicInfoLabel.setText("Yes");
 					}
 					else {
 						fields.setDynamic(false);
 						getConfigurePartitionsMenuItem().setVisible(true);
+						dynamicInfoLabel.setText("No");
 					}
 					updateMemPanels();
 				}
@@ -378,9 +389,11 @@ public class MainUI extends JFrame {
 		if (memTopPanel == null) {
 			memTopPanel = new JPanel();
 			memTopPanel.setLayout(new BorderLayout());
-			memTopPanel.setPreferredSize(new Dimension(200, 50));
+			memTopPanel.setPreferredSize(new Dimension(200, 55));
 
-			memTopPanel.add(getMainCMemoryPanel(), BorderLayout.NORTH);
+			memTopPanel.add(getMainCMemoryPanel(), BorderLayout.CENTER);
+			memTopPanel.add(getAlgoPanel(), BorderLayout.WEST);
+			memTopPanel.add(getTopRightPanel(), BorderLayout.EAST);
 		}
 		return memTopPanel;
 	}
@@ -392,14 +405,8 @@ public class MainUI extends JFrame {
 	 */
 	private JPanel getSpreadsheetPanel() {
 		if (spreadsheetPanel == null) {
-			GridBagConstraints gridBagConstraints = new GridBagConstraints();
-			gridBagConstraints.fill = GridBagConstraints.BOTH;
-			gridBagConstraints.gridy = 0;
-			gridBagConstraints.weightx = 1.0;
-			gridBagConstraints.weighty = 1.0;
-			gridBagConstraints.gridx = 0;
 			spreadsheetPanel = new JPanel();
-			spreadsheetPanel.setLayout(new FlowLayout());
+			spreadsheetPanel.setLayout(new BoxLayout(getSpreadsheetPanel(), BoxLayout.Y_AXIS));
 		}
 		return spreadsheetPanel;
 	}
@@ -511,6 +518,25 @@ public class MainUI extends JFrame {
 		if (stepButton == null) {
 			stepButton = new JButton();
 			stepButton.setText("Step");
+			stepButton.addActionListener(new java.awt.event.ActionListener() {
+				public void actionPerformed(java.awt.event.ActionEvent e) {
+					int algo = fields.getAlgorithm();
+					switch(algo) {
+					case 0:
+						firstFit();
+						break;
+					case 1:
+						bestFit();
+						break;
+					case 2:
+						nextFit();
+						break;
+					case 3:
+						worstFit();
+						break;
+					}
+				}
+			});
 		}
 		return stepButton;
 	}
@@ -550,6 +576,7 @@ public class MainUI extends JFrame {
 			ffRadioButtonMenuItem.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
 					fields.setAlgorithm(0);
+					algoInfoLabel.setText("First-fit");
 				}
 			});
 		}
@@ -568,6 +595,7 @@ public class MainUI extends JFrame {
 			bfRadioButtonMenuItem.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
 					fields.setAlgorithm(1);
+					algoInfoLabel.setText("Best-fit");
 				}
 			});
 		}
@@ -586,6 +614,7 @@ public class MainUI extends JFrame {
 			nfRadioButtonMenuItem.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
 					fields.setAlgorithm(1);
+					algoInfoLabel.setText("Next-fit");
 				}
 			});
 		}
@@ -604,9 +633,87 @@ public class MainUI extends JFrame {
 			wfRadioButtonMenuItem.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
 					fields.setAlgorithm(2);
+					algoInfoLabel.setText("Worst-fit");
 				}
 			});
 		}
 		return wfRadioButtonMenuItem;
+	}
+
+	/**
+	 * This method initializes algoPanel	
+	 * 	
+	 * @return javax.swing.JPanel	
+	 */
+	private JPanel getAlgoPanel() {
+		if (algoPanel == null) {
+			GridBagConstraints gridBagConstraints2 = new GridBagConstraints();
+			gridBagConstraints2.gridx = 1;
+			gridBagConstraints2.gridy = 0;
+			algoInfoLabel = new JLabel();
+			algoInfoLabel.setText("First-fit");
+			algoInfoLabel.setVisible(true);
+			GridBagConstraints gridBagConstraints1 = new GridBagConstraints();
+			gridBagConstraints1.gridx = 0;
+			gridBagConstraints1.gridy = 0;
+			algoLabel = new JLabel();
+			algoLabel.setText("Algorithm: ");
+			algoPanel = new JPanel();
+			algoPanel.setLayout(new GridBagLayout());
+			algoPanel.setPreferredSize(new Dimension(150, 10));
+			algoPanel.add(algoLabel, gridBagConstraints1);
+			algoPanel.add(algoInfoLabel, gridBagConstraints2);
+		}
+		return algoPanel;
+	}
+
+	/**
+	 * This method initializes topRightPanel	
+	 * 	
+	 * @return javax.swing.JPanel	
+	 */
+	private JPanel getTopRightPanel() {
+		if (topRightPanel == null) {
+			GridBagConstraints gridBagConstraints4 = new GridBagConstraints();
+			gridBagConstraints4.gridx = 1;
+			gridBagConstraints4.gridy = 0;
+			dynamicInfoLabel = new JLabel();
+			dynamicInfoLabel.setText("No");
+			GridBagConstraints gridBagConstraints3 = new GridBagConstraints();
+			gridBagConstraints3.gridx = 0;
+			gridBagConstraints3.gridy = 0;
+			dynamicLabel = new JLabel();
+			dynamicLabel.setText("Dynamic: ");
+			topRightPanel = new JPanel();
+			topRightPanel.setLayout(new GridBagLayout());
+			topRightPanel.setPreferredSize(new Dimension(120, 10));
+			topRightPanel.add(dynamicLabel, gridBagConstraints3);
+			topRightPanel.add(dynamicInfoLabel, gridBagConstraints4);
+		}
+		return topRightPanel;
+	}
+	
+	public void firstFit() {
+		if (fields.getJobList().isEmpty())
+			return;
+		
+		Job nextJob = fields.getJobList().remove(0);
+		for (Partition p : fields.getPartList()) {
+			if (!p.isBusy() && p.getSize() >= nextJob.getSize()) {
+				p.assignJob(nextJob);
+				return;
+			}
+		}
+		
+		fields.getWaitingQueue().add(nextJob);
+	}
+	
+	public void bestFit() {
+	}
+
+	public void nextFit() {
+	}
+
+	public void worstFit() {
 	}
 }  //  @jve:decl-index=0:visual-constraint="10,10"

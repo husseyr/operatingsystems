@@ -261,7 +261,7 @@ public class ConfigureJobsDialog extends JDialog {
 		jobListInnerPanel = getJobListInnerPanel();
 		
 		int i = 0;
-		for (Job j : fields.getJobQueue()) {
+		for (Job j : fields.getJobList()) {
 			JPanel itemPanel = createJobItemPanel(i, "Job " + i + ": Size = " + j.getSize() + 
 					" Completion time = " + j.getCompletionTime());
 			jobListInnerPanel.add(itemPanel);

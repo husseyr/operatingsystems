@@ -15,16 +15,18 @@ import java.util.Queue;
 public class Fields {
 	private int memSize;
 	private List<Partition> partList;
-	private List<Job> jobQueue;
+	private List<Job> jobList;
+	private Queue<Job> waitingQueue;
 	private static int totalPartSize;
 	private boolean dynamic;
 	private static int lastJobID;
 	private int algorithm; // 0=first-fit, 1=best-fit, 2=next-fit, 3=worst-fit
 	
-	public Fields(int memSize, List<Partition> partList, List<Job> jobQueue) {
+	public Fields(int memSize, List<Partition> partList, List<Job> jobList) {
 		this.memSize = memSize;
 		this.partList = partList;
-		this.jobQueue = jobQueue;
+		this.jobList = jobList;
+		waitingQueue = new LinkedList<Job>();
 		dynamic = false;
 		totalPartSize = 0;
 		lastJobID = -1; // -1 since there is no last job at this point
@@ -39,7 +41,7 @@ public class Fields {
 		
 		if (dynamic == true) {
 			lastJobID = 0;
-			jobQueue = new LinkedList<Job>();
+			jobList = new LinkedList<Job>();
 		}
 		
 		if (dynamic == true || (dynamic == false && memSize < totalPartSize)) {
@@ -53,15 +55,18 @@ public class Fields {
 	public List<Partition> getPartList() {
 		return partList;
 	}
-	public List<Job> getJobQueue() {
-		return jobQueue;
+	public List<Job> getJobList() {
+		return jobList;
+	}
+	public Queue<Job> getWaitingQueue() {
+		return waitingQueue;
 	}
 	public void setDynamic(boolean dynamic) {
 		this.dynamic = dynamic;
 		totalPartSize = 0;
 		partList = new LinkedList<Partition>();
 		lastJobID = 0;
-		jobQueue = new LinkedList<Job>();
+		jobList = new LinkedList<Job>();
 	}
 	public boolean isDynamic() {
 		return dynamic;
@@ -106,21 +111,25 @@ public class Fields {
 
 	public void addJob(int size) {
 		lastJobID++;
-		jobQueue.add(new Job(lastJobID, size, 30));
+		jobList.add(new Job(lastJobID, size, 30));
 	}
 	
 	public void removeJob(int id) {
-		if (jobQueue.size() <= id)
+		if (jobList.size() <= id)
 			return;
 		
-		for (int i = id + 1; i < jobQueue.size(); i++)
-			jobQueue.get(i).setId(i - 1);
+		for (int i = id + 1; i < jobList.size(); i++)
+			jobList.get(i).setId(i - 1);
 			
-		jobQueue.remove(id);
+		jobList.remove(id);
 		lastJobID--;
 	}
 	
 	public void setAlgorithm(int algorithm) {
 		this.algorithm = algorithm;
+	}
+	
+	public int getAlgorithm() {
+		return algorithm;
 	}
 }
