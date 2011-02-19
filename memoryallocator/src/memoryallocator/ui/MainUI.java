@@ -1,7 +1,6 @@
 package memoryallocator.ui;
 
 import java.awt.BorderLayout;
-
 import javax.swing.ButtonGroup;
 import javax.swing.JPanel;
 import javax.swing.JFrame;
@@ -11,30 +10,20 @@ import javax.swing.JMenuItem;
 import javax.swing.JDialog;
 import java.awt.Dimension;
 import javax.swing.JLabel;
-
 import java.awt.Color;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.FlowLayout;
 import java.awt.event.ItemEvent;
-import java.util.Queue;
-/**
- * 
- */
 import javax.swing.JTextField;
 import javax.swing.JButton;
-
 import memoryallocator.util.Fields;
 import memoryallocator.util.Job;
 import memoryallocator.util.Partition;
 import memoryallocator.util.SpreadsheetTable;
-
 import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JCheckBox;
 import javax.swing.WindowConstants;
 import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableModel;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.BoxLayout;
 
@@ -80,6 +69,7 @@ public class MainUI extends JFrame {
 	private JPanel topRightPanel = null;
 	private JLabel dynamicLabel = null;
 	private JLabel dynamicInfoLabel = null;
+	
 	/**
 	 * This is the default constructor
 	 */
@@ -523,16 +513,16 @@ public class MainUI extends JFrame {
 					int algo = fields.getAlgorithm();
 					switch(algo) {
 					case 0:
-						firstFit();
+						fields.firstFit();
 						break;
 					case 1:
-						bestFit();
+						fields.bestFit();
 						break;
 					case 2:
-						nextFit();
+						fields.nextFit();
 						break;
 					case 3:
-						worstFit();
+						fields.worstFit();
 						break;
 					}
 				}
@@ -691,29 +681,5 @@ public class MainUI extends JFrame {
 			topRightPanel.add(dynamicInfoLabel, gridBagConstraints4);
 		}
 		return topRightPanel;
-	}
-	
-	public void firstFit() {
-		if (fields.getJobList().isEmpty())
-			return;
-		
-		Job nextJob = fields.getJobList().remove(0);
-		for (Partition p : fields.getPartList()) {
-			if (!p.isBusy() && p.getSize() >= nextJob.getSize()) {
-				p.assignJob(nextJob);
-				return;
-			}
-		}
-		
-		fields.getWaitingQueue().add(nextJob);
-	}
-	
-	public void bestFit() {
-	}
-
-	public void nextFit() {
-	}
-
-	public void worstFit() {
 	}
 }  //  @jve:decl-index=0:visual-constraint="10,10"

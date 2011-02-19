@@ -8,16 +8,18 @@ package memoryallocator.util;
  *
  */
 public class Partition {
+	protected int id;
 	protected int size;			// every partition needs a size
 	protected int startAddress;	// where the partition starts in memory
 	protected Job accessJob;		// job assigned to partition
 	protected boolean status;		// free=false, busy=true
 	
-	Partition(int size, int startAddress) {
+	Partition(int id, int size, int startAddress) {
+		this.id = id;
 		this.size = size;
 		this.startAddress = startAddress;
-		this.accessJob = null;
-		this.status = false;
+		accessJob = null;
+		status = false;
 	}
 	
 	public int getSize() {

@@ -3,6 +3,8 @@
  */
 package memoryallocator.util;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
@@ -20,7 +22,9 @@ public class Fields {
 	private static int totalPartSize;
 	private boolean dynamic;
 	private static int lastJobID;
+	private static int lastPartID;
 	private int algorithm; // 0=first-fit, 1=best-fit, 2=next-fit, 3=worst-fit
+	private int lastPartAssigned;
 	
 	public Fields(int memSize, List<Partition> partList, List<Job> jobList) {
 		this.memSize = memSize;
@@ -30,7 +34,9 @@ public class Fields {
 		dynamic = false;
 		totalPartSize = 0;
 		lastJobID = -1; // -1 since there is no last job at this point
+		lastPartID = -1;
 		algorithm = 0;
+		lastPartAssigned = 0;
 	}
 	
 	public int getMemSize() {
@@ -54,6 +60,18 @@ public class Fields {
 	}
 	public List<Partition> getPartList() {
 		return partList;
+	}
+	public Partition[] getOrderedPartArray() {
+		Partition[] oParts = (Partition[]) partList.toArray();
+		Arrays.sort(oParts);
+		
+		return oParts;
+	}
+	public Partition[] getReverseOrderedPartArray() {
+		Partition[] oParts = (Partition[]) partList.toArray();
+		Arrays.sort(oParts, Collections.reverseOrder());
+		
+		return oParts;
 	}
 	public List<Job> getJobList() {
 		return jobList;
@@ -79,8 +97,9 @@ public class Fields {
 	 * @return true if the partition was added, false if not
 	 */
 	public boolean addPartition(int size, int memAddress) {
+		lastPartID++;
 		if (totalPartSize + size <= memSize) {
-			partList.add(new Partition(size, memAddress));
+			partList.add(new Partition(lastPartID, size, memAddress));
 			totalPartSize += size;
 			return true;
 		}
@@ -131,5 +150,79 @@ public class Fields {
 	
 	public int getAlgorithm() {
 		return algorithm;
+	}
+	
+	public void firstFit() {
+		if (jobList.isEmpty())
+			return;
+		
+		Job nextJob = jobList.remove(0);
+		for (Partition p : partList) {
+			if (!p.isBusy() && p.getSize() >= nextJob.getSize()) {
+				p.assignJob(nextJob);
+				lastPartAssigned = p.id;
+				return;
+			}
+		}
+		
+		waitingQueue.add(nextJob);
+	}
+	
+	public void bestFit() {
+		if (jobList.isEmpty())
+			return;
+		
+		Job nextJob = jobList.remove(0);
+		for (Partition p : getOrderedPartArray()) {
+			if (!p.isBusy() && p.getSize() >= nextJob.getSize()) {
+				p.assignJob(nextJob);
+				lastPartAssigned = p.id;
+				return;
+			}
+		}
+		
+		waitingQueue.add(nextJob);
+	}
+
+	public void nextFit() {
+		if (jobList.isEmpty())
+			return;
+		
+		Job nextJob = jobList.remove(0);
+		for (int i = lastPartAssigned; i < partList.size(); i++) {
+			Partition p = partList.get(i);
+			if (!p.isBusy() && p.getSize() >= nextJob.getSize()) {
+				p.assignJob(nextJob);
+				lastPartAssigned = p.id;
+				return;
+			}
+		}
+		
+		for (int i = 0; i < lastPartAssigned; i++) {
+			Partition p = partList.get(i);
+			if (!p.isBusy() && p.getSize() >= nextJob.getSize()) {
+				p.assignJob(nextJob);
+				lastPartAssigned = p.id;
+				return;
+			}
+		}
+
+		waitingQueue.add(nextJob);
+	}
+
+	public void worstFit() {
+		if (jobList.isEmpty())
+			return;
+		
+		Job nextJob = jobList.remove(0);
+		for (Partition p : getReverseOrderedPartArray()) {
+			if (!p.isBusy() && p.getSize() >= nextJob.getSize()) {
+				p.assignJob(nextJob);
+				lastPartAssigned = p.id;
+				return;
+			}
+		}
+		
+		waitingQueue.add(nextJob);
 	}
 }

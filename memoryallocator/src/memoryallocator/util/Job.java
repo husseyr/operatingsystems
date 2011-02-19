@@ -8,9 +8,9 @@ package memoryallocator.util;
  *
  */
 public class Job {
-	private int id;
-	private int size;
-	private int completionTime;
+	protected int id;
+	protected int size;
+	protected int completionTime;
 	
 	Job(int id, int size, int completionTime) {
 		this.id = id;
