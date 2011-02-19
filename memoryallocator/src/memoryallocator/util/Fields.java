@@ -18,6 +18,7 @@ import java.util.Random;
 public class Fields {
 	private int memSize;
 	private List<Partition> partList;
+	private List<Partition> freeList;
 	private List<Job> jobList;
 	private Queue<Job> waitingQueue;
 	private static int totalPartSize;
@@ -32,6 +33,7 @@ public class Fields {
 		this.partList = partList;
 		this.jobList = jobList;
 		waitingQueue = new LinkedList<Job>();
+		freeList = new LinkedList<Partition>();
 		dynamic = false;
 		totalPartSize = 0;
 		lastJobID = -1; // -1 since there is no last job at this point
@@ -51,6 +53,7 @@ public class Fields {
 			jobList = new LinkedList<Job>();
 			totalPartSize = 0;
 			partList = new LinkedList<Partition>();
+			freeList = new LinkedList<Partition>();
 		}
 	}
 	public int getTotalPartSize() {
@@ -59,14 +62,17 @@ public class Fields {
 	public List<Partition> getPartList() {
 		return partList;
 	}
+	public List<Partition> getFreeList() {
+		return freeList;
+	}
 	public Partition[] getOrderedPartArray() {
-		Partition[] oParts = Arrays.copyOf(partList.toArray(), partList.size(), Partition[].class);
+		Partition[] oParts = Arrays.copyOf(freeList.toArray(), freeList.size(), Partition[].class);
 		Arrays.sort(oParts);
 		
 		return oParts;
 	}
 	public Partition[] getReverseOrderedPartArray() {
-		Partition[] oParts = Arrays.copyOf(partList.toArray(), partList.size(), Partition[].class);
+		Partition[] oParts = Arrays.copyOf(freeList.toArray(), freeList.size(), Partition[].class);
 		Arrays.sort(oParts, Collections.reverseOrder());
 		
 		return oParts;
@@ -81,6 +87,7 @@ public class Fields {
 		this.dynamic = dynamic;
 		totalPartSize = 0;
 		partList = new LinkedList<Partition>();
+		freeList = new LinkedList<Partition>();
 		lastJobID = 0;
 		jobList = new LinkedList<Job>();
 	}
@@ -96,7 +103,9 @@ public class Fields {
 	 */
 	public void addPartition(int size, int memAddress) {
 		lastPartID++;
-		partList.add(new Partition(lastPartID, size, memAddress));
+		Partition p = new Partition(lastPartID, size, memAddress);
+		partList.add(p);
+		freeList.add(p); // every partition starts out free
 		totalPartSize += size;
 	}
 	
@@ -104,13 +113,15 @@ public class Fields {
 		if (partList.size() <= id)
 			return;
 		
-		int prevAddr = partList.get(id).startAddress;
+		Partition p = partList.get(id);
+		int prevAddr = p.startAddress;
 		for (int i = id + 1; i < partList.size(); i++) {
 			int curAddr = partList.get(i).startAddress;
 			partList.get(i).startAddress = prevAddr;
 			prevAddr = curAddr;
 		}
 		totalPartSize -= partList.remove(id).size;
+		freeList.remove(p);
 	}
 	
 	public int getLargestPartition() {
@@ -148,12 +159,34 @@ public class Fields {
 		return algorithm;
 	}
 	
+	private void deallocate() {
+		for (int i = 0; i < freeList.size(); i++) {
+			Partition p1 = freeList.get(i);
+			for (int j = 0; j < freeList.size(); j++) {
+				Partition p2 = freeList.get(j);
+				if (p1.startAddress + p1.size == p2.startAddress) {
+					p1.setSize(p1.size + p2.size);
+					freeList.remove(p2);
+				}
+			}
+		}
+	}
+	
 	private boolean firstFit(Job j) {
 		// go through partitions in their current order - find first fit for job
-		for (Partition p : partList) {
-			if (!p.isBusy() && p.getSize() >= j.getSize()) {
+		for (Partition p : freeList) {
+			if (p.getSize() >= j.getSize()) {
 				p.assignJob(j);
 				lastPartAssigned = p.id;
+				freeList.remove(p);
+				if (dynamic && j.getSize() < p.getSize()) {
+					Partition freePartition = new Partition(lastPartID + 1, p.size - j.getSize(), p.startAddress + j.getSize());
+					p.setSize(j.getSize());
+					freePartition.oldAddress = p.startAddress;
+					freePartition.oldSize = p.size;
+					freeList.add(freePartition);
+				}
+				
 				return true;
 			}
 		}
@@ -179,8 +212,9 @@ public class Fields {
 	private boolean bestFit(Job j) {
 		// get partitions sorted smallest to largest - find first (smallest) fit
 		for (Partition p : getOrderedPartArray()) {
-			if (!p.isBusy() && p.getSize() >= j.getSize()) {
+			if (p.getSize() >= j.getSize()) {
 				p.assignJob(j);
+				freeList.remove(p);
 				lastPartAssigned = p.id;
 				return true;
 			}
@@ -206,10 +240,11 @@ public class Fields {
 
 	private boolean nextFit(Job j) {
 		// start search at whatever partition last assigned a job
-		for (int i = lastPartAssigned; i < partList.size(); i++) {
-			Partition p = partList.get(i);
-			if (!p.isBusy() && p.getSize() >= j.getSize()) {
+		for (int i = lastPartAssigned; i < freeList.size(); i++) {
+			Partition p = freeList.get(i);
+			if (p.getSize() >= j.getSize()) {
 				p.assignJob(j);
+				freeList.remove(p);
 				lastPartAssigned = p.id;
 				return true;
 			}
@@ -217,8 +252,8 @@ public class Fields {
 		
 		// nothing from last partition to end, start from beginning
 		for (int i = 0; i < lastPartAssigned; i++) {
-			Partition p = partList.get(i);
-			if (!p.isBusy() && p.getSize() >= j.getSize()) {
+			Partition p = freeList.get(i);
+			if (p.getSize() >= j.getSize()) {
 				p.assignJob(j);
 				lastPartAssigned = p.id;
 				return true;
@@ -246,8 +281,9 @@ public class Fields {
 	private boolean worstFit(Job j) {
 		// get partitions sorted biggest to smallest and find first (biggest) that it will fit
 		for (Partition p : getReverseOrderedPartArray()) {
-			if (!p.isBusy() && p.getSize() >= j.getSize()) {
+			if (p.getSize() >= j.getSize()) {
 				p.assignJob(j);
+				freeList.remove(p);
 				lastPartAssigned = p.id;
 				return true;
 			}
@@ -276,8 +312,12 @@ public class Fields {
 			if (p.accessJob != null) {
 				p.accessJob.completionTime--;
 				
-				if (p.accessJob.completionTime == 0)
+				if (p.accessJob.completionTime == 0) {
 					p.removeJob();
+					freeList.add(p);
+					if (dynamic)
+						deallocate();
+				}
 			}
 		}
 	}

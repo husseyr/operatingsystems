@@ -236,15 +236,6 @@ public class ConfigureJobsDialog extends JDialog {
 						invalidLabel.setVisible(false);
 
 						fields.addJob(jobSize);
-						
-						if (fields.isDynamic()) {
-							if (fields.getPartList().isEmpty())
-								fields.addPartition(jobSize, 0);
-							else {
-								Partition lastPart = fields.getPartList().get(fields.getPartList().size() - 1);
-								fields.addPartition(jobSize, lastPart.getStartAddress() + lastPart.getSize());
-							}
-						}
 
 						updateJobs();
 					} catch (NumberFormatException ne) {

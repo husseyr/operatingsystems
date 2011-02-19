@@ -18,6 +18,7 @@ import java.awt.event.ItemEvent;
 import javax.swing.JTextField;
 import javax.swing.JButton;
 import memoryallocator.util.Fields;
+import memoryallocator.util.Job;
 import memoryallocator.util.Partition;
 import memoryallocator.util.SpreadsheetTable;
 import javax.swing.JCheckBoxMenuItem;
@@ -341,6 +342,11 @@ public class MainUI extends JFrame {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
 					JMenuItem source = (JMenuItem)e.getSource();
 					new ConfigureJobsDialog((JFrame)source.getTopLevelAncestor(), fields).setVisible(true);
+					
+					// if dynamic start with one large free partition to slice jobs into
+					if (fields.isDynamic() && fields.getFreeList().isEmpty()) {
+						fields.addPartition(fields.getMemSize(), 0);
+					}
 					updateMemPanels();
 				}
 			});
@@ -442,13 +448,13 @@ public class MainUI extends JFrame {
 	}
 	
 	private void updateSpreadsheetTable() {
-		Color unusedColor = Color.gray;
 		Color headerColor = getJContentPane().getBackground();
 		Color oldColor = Color.white;
+		Color updatedColor = Color.cyan;
 		
 		if (fields.isDynamic()) {
 			String[] colNames = {"Before Request","","After Request",""};
-			spreadsheetTable = new SpreadsheetTable(fields.getPartList().size() + 1, 4, colNames) {
+			spreadsheetTable = new SpreadsheetTable(fields.getFreeList().size() + 1, 4, colNames) {
 				private static final long serialVersionUID = 1L;
 				public boolean isCellEditable(int rowIndex, int colIndex) {
 					return false;   //Disallow the editing of any cell
@@ -460,12 +466,12 @@ public class MainUI extends JFrame {
 			spreadsheetTable.setValue("Beginning Address", 0, 2, headerColor);
 			spreadsheetTable.setValue("Memory Block Size", 0, 3, headerColor);
 			
-			for (int i = 0; i < fields.getPartList().size(); i++) {
-				Partition p = fields.getPartList().get(i);
-				spreadsheetTable.setValue(p.getStartAddress(), i+1, 0, oldColor);
-				spreadsheetTable.setValue(p.getSize(), i+1, 1, oldColor);
-				spreadsheetTable.setValue("", i+1, 2, unusedColor);
-				spreadsheetTable.setValue("", i+1, 3, unusedColor);
+			for (int i = 0; i < fields.getFreeList().size(); i++) {
+				Partition p = fields.getFreeList().get(i);
+				spreadsheetTable.setValue(p.getOldAddress(), i+1, 0, oldColor);
+				spreadsheetTable.setValue(p.getOldSize(), i+1, 1, oldColor);
+				spreadsheetTable.setValue(p.getStartAddress(), i+1, 2, updatedColor);
+				spreadsheetTable.setValue(p.getSize(), i+1, 3, updatedColor);
 			}
 		}
 		else {
@@ -498,22 +504,35 @@ public class MainUI extends JFrame {
 		spreadsheetPanel.add(getSpreadsheetScrollPane());
 		spreadsheetPanel.revalidate();
 		
-		updateJobPanel();
+		updateLists();
 	}
 	
-	private void updateJobPanel() {
-		String[] jobListStrings = new String[fields.getJobList().size()];
+	private void updateLists() {
+		String[] listStrings = new String[fields.getJobList().size()];
 		for (int i = 0; i < fields.getJobList().size(); i++) {
-			jobListStrings[i] = "Job " + fields.getJobList().get(i).getId() + ": Size = " + fields.getJobList().get(i).getSize() + 
+			listStrings[i] = "Job " + fields.getJobList().get(i).getId() + ": Size = " + fields.getJobList().get(i).getSize() + 
 				" Time: " + fields.getJobList().get(i).getCompletionTime();
 		}
 		
 		getJobPanel().remove(jobListScrollPane);
-		getJobJList(jobListStrings);
+		getJobJList(listStrings);
 		jobListScrollPane = null;
 		getJobListScrollPane();
 		jobPanel.add(jobListScrollPane);
 		jobPanel.revalidate();
+		
+		listStrings = new String[fields.getWaitingQueue().size()];
+		int index = 0;
+		for (Job j : fields.getWaitingQueue())
+			listStrings[index++] = "Job " + j.getId() + ": Size = " + j.getSize() + " Time = " + j.getCompletionTime();
+		
+		getWaitingPanel().remove(waitingScrollPane);
+		getWaitingList(listStrings);
+		waitingScrollPane = null;
+		getWaitingScrollPane();
+		waitingPanel.add(waitingScrollPane);
+		waitingPanel.revalidate();
+		
 	}
 
 	/**
@@ -728,7 +747,6 @@ public class MainUI extends JFrame {
 			jobPanel.setLayout(new BoxLayout(jobPanel, BoxLayout.Y_AXIS));
 			jobPanel.setPreferredSize(new Dimension(200, 200));
 			jobPanel.setBackground(Color.white);
-			jobPanel.setBorder(BorderFactory.createLineBorder(Color.gray, 1));
 			jobPanel.add(getJobListScrollPane(), null);
 		}
 		return jobPanel;
@@ -740,9 +758,8 @@ public class MainUI extends JFrame {
 	 * @return javax.swing.JList	
 	 */
 	private JList getJobJList(String[] data) {
-		if (data == null && jobJList == null) {
+		if (data == null && jobJList == null)
 			jobJList = new JList();
-		}
 		else if (data != null)
 			jobJList = new JList(data);
 		
@@ -774,7 +791,7 @@ public class MainUI extends JFrame {
 			listsSplitPane = new JSplitPane();
 			listsSplitPane.setDividerSize(1);
 			listsSplitPane.setDividerLocation(175);
-			listsSplitPane.setPreferredSize(new Dimension(350, 150));
+			listsSplitPane.setPreferredSize(new Dimension(350, 200));
 			listsSplitPane.setLeftComponent(getJobPanel());
 			listsSplitPane.setRightComponent(getWaitingPanel());
 		}
@@ -792,7 +809,6 @@ public class MainUI extends JFrame {
 			waitingPanel.setLayout(new BoxLayout(waitingPanel, BoxLayout.Y_AXIS));
 			waitingPanel.setPreferredSize(new Dimension(200, 200));
 			waitingPanel.setBackground(Color.white);
-			waitingPanel.setBorder(BorderFactory.createLineBorder(Color.gray, 1));
 			waitingPanel.add(getWaitingScrollPane(), null);
 		}
 		return waitingPanel;
@@ -820,11 +836,11 @@ public class MainUI extends JFrame {
 	 * 	
 	 * @return javax.swing.JList	
 	 */
-	private JList getBottomList() {
-		if (bottomList == null) {
+	private JList getBottomList(String[] data) {
+		if (bottomList == null && data == null)
 			bottomList = new JList();
-			bottomList.setPreferredSize(new Dimension(100, 100));
-		}
+		else if (data != null)
+			bottomList = new JList(data);
 		return bottomList;
 	}
 
@@ -849,7 +865,7 @@ public class MainUI extends JFrame {
 	private JScrollPane getWaitingScrollPane() {
 		if (waitingScrollPane == null) {
 			waitingScrollPane = new JScrollPane();
-			waitingScrollPane.setViewportView(getWaitingList());
+			waitingScrollPane.setViewportView(getWaitingList(null));
 		}
 		return waitingScrollPane;
 	}
@@ -859,10 +875,12 @@ public class MainUI extends JFrame {
 	 * 	
 	 * @return javax.swing.JList	
 	 */
-	private JList getWaitingList() {
-		if (waitingList == null) {
+	private JList getWaitingList(String[] data) {
+		if (waitingList == null && data == null)
 			waitingList = new JList();
-		}
+		else if (data != null)
+			waitingList = new JList(data);
+		
 		return waitingList;
 	}
 
@@ -874,7 +892,7 @@ public class MainUI extends JFrame {
 	private JScrollPane getBottomScrollPane() {
 		if (bottomScrollPane == null) {
 			bottomScrollPane = new JScrollPane();
-			bottomScrollPane.setViewportView(getBottomList());
+			bottomScrollPane.setViewportView(getBottomList(null));
 		}
 		return bottomScrollPane;
 	}

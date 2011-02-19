@@ -3,13 +3,10 @@
  */
 package memoryallocator.ui;
 
-import java.awt.GridBagLayout;
 import javax.swing.JPanel;
 import javax.swing.JLabel;
-import java.awt.GridBagConstraints;
 import java.awt.FlowLayout;
 import java.awt.Dimension;
-import java.awt.GridLayout;
 import javax.swing.BoxLayout;
 import javax.swing.BorderFactory;
 import java.awt.Color;

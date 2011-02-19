@@ -9,7 +9,9 @@ package memoryallocator.util;
  */
 public class Partition implements Comparable<Partition> {
 	protected int id;
+	protected int oldSize;
 	protected int size;			// every partition needs a size
+	protected int oldAddress;   // dynamic needs reference to previous starting address
 	protected int startAddress;	// where the partition starts in memory
 	protected Job accessJob;		// job assigned to partition
 	protected boolean status;		// free=false, busy=true
@@ -17,7 +19,9 @@ public class Partition implements Comparable<Partition> {
 	Partition(int id, int size, int startAddress) {
 		this.id = id;
 		this.size = size;
+		oldSize = size;
 		this.startAddress = startAddress;
+		oldAddress = startAddress;
 		accessJob = null;
 		status = false;
 	}
@@ -29,9 +33,17 @@ public class Partition implements Comparable<Partition> {
 	public void setSize(int size) {
 		this.size = size;
 	}
+	
+	public int getOldSize() {
+		return oldSize;
+	}
 
 	public int getStartAddress() {
 		return startAddress;
+	}
+	
+	public int getOldAddress() {
+		return oldAddress;
 	}
 	
 	public int getAccessJobID() {
