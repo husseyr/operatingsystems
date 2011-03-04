@@ -4,7 +4,7 @@
 package pageremover.util;
 
 /**
- * @author d17-12
+ * @author Rob Hussey
  *
  */
 public class PageFrame {
